@@ -1,33 +1,33 @@
-#-----------------------------------------------------------------------------
-#   Copyright 2022 Wolfire Games LLC
+# -----------------------------------------------------------------------------
+# Copyright 2022 Wolfire Games LLC
 #
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
 #
-#       http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-#-----------------------------------------------------------------------------
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5) #Version of cmake in steam-runtime
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+# -----------------------------------------------------------------------------
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5) # Version of cmake in steam-runtime
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET(CMAKE_CXX_EXTENSIONS OFF)
 
-PROJECT(Overgrowth)        
+PROJECT(Overgrowth)
+
+# Set preferred OpenGL type so modern CMake doesn't complain
+SET(OpenGL_GL_PREFERENCE GLVND)
 
 OPTION(FATAL_LOG_ASSERTS "Have LOG_ASSERTS* trigger a normal assert() call" OFF)
 
 IF(FATAL_LOG_ASSERTS)
     ADD_DEFINITIONS(-DFATAL_LOG_ASSERTS=1)
-    MESSAGE( STATUS "Compiling with fatal log asserts")
+    MESSAGE(STATUS "Compiling with fatal log asserts")
 ELSE()
-    MESSAGE( STATUS "Not compiling with fatal log asserts")
+    MESSAGE(STATUS "Not compiling with fatal log asserts")
 ENDIF()
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -35,12 +35,18 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 INCLUDE(GetGitRevisionDescription)
 INCLUDE(ExternalProject)
 
-git_describe(GIT_VERSION --always --tag)
-git_rev_list(GIT_REV_LIST --count HEAD) # Count what revision we're on
+GIT_DESCRIBE(GIT_VERSION --always --tag)
+GIT_REV_LIST(GIT_REV_LIST --count HEAD) # Count what revision we're on
 SET(BUILD_ID "-1" CACHE STRING "Build ID value from automated build system")
-#Option to build with breakpad, removes some compiler warnings, so it's best to go without for normal development.
+
+# Option to build with breakpad, removes some compiler warnings, so it's best to go without for normal development.
+# cmake-format: off
 OPTION(BREAKPAD "Build with breakpad linked into the binary and with exception handling?" OFF)
-OPTION(DO_DIST_ARCHIVE "Generate a package containing all build data relevant for final release, excluding game data." OFF)
+OPTION(
+    DO_DIST_ARCHIVE
+    "Generate a package containing all build data relevant for final release, excluding game data."
+    OFF
+)
 OPTION(BUILD_SERVER "Building on a buildserver, this means that additional steps are included which generally only occur on a build server" OFF)
 OPTION(SLIM_TIMING "Build with slim timing system activated" OFF)
 OPTION(ENABLE_RAD_TELEMETRY "Enable RAD Game Tools Telemetry Support" OFF)
@@ -55,9 +61,13 @@ OPTION(OPEN_CONSOLE "Open a console on startup on windows" On)
 OPTION(FORCE_OPENGL_ERROR_CHECKING "Force OpenGL error checking in Release" Off)
 OPTION(DEPLOY "Set the codebase to compile for Deploy, this means compiling for final release to end-user, in practice, by setting the _DEPLOY define it activates a working directory change on start to force it to be the path of the binary. It also impacts some error messages. This is automatically turned on if BUILD_SERVER is On" Off)
 OPTION(ENABLE_STEAMWORKS "Build with Steamworks Support" Off)
-SET(AUX_DATA "" CACHE PATH "Auxiliary Data sourced path, used when using a Data folder from an additional path, like an already installed version of the game")
+SET(
+    AUX_DATA "" CACHE PATH
+    "Auxiliary Data sourced path, used when using a Data folder from an additional path, like an already installed version of the game"
+)
+# cmake-format: on
 
-#Assume we want steamworks support if we're building on the build server, until we start supporting more targets
+# Assume we want steamworks support if we're building on the build server, until we start supporting more targets
 IF(BUILD_SERVER)
     SET(ENABLE_STEAMWORKS ON)
 ENDIF()
@@ -71,7 +81,7 @@ ENDIF()
 
 IF(GPU_MARKERS)
     IF(APPLE)
-        message(FATAL_ERROR "Mac doesn't support GL_KHR_debug")
+        MESSAGE(FATAL_ERROR "Mac doesn't support GL_KHR_debug")
     ENDIF()
 
     ADD_DEFINITIONS(-DGPU_MARKERS=1)
@@ -81,7 +91,7 @@ IF(GPU_MARKERS)
 ENDIF()
 
 IF(SLIM_TIMING)
-	ADD_DEFINITIONS(-DSLIM_TIMING=1)
+    ADD_DEFINITIONS(-DSLIM_TIMING=1)
 ENDIF()
 
 IF(GL_TIMING_QUERY)
@@ -91,14 +101,13 @@ ENDIF()
 IF(GL_INTEL_TIMING)
     ADD_DEFINITIONS(-DINTEL_TIMING=1)
 ENDIF()
-	
 
-#Activate flags that are related to running on the build server.
+# Activate flags that are related to running on the build server.
 IF(BUILD_SERVER)
     IF(MSVC_VERSION GREATER 1910)
         SET(BREAKPAD Off)
     ELSE()
-        SET(BREAKPAD Off)#Disable breakpad for all situations for now, build server lacks support
+        SET(BREAKPAD Off) # Disable breakpad for all situations for now, build server lacks support
     ENDIF()
     SET(DO_DIST_ARCHIVE On)
     SET(ENABLE_RAD_TELEMTRY OFF)
@@ -109,18 +118,18 @@ ENDIF()
 
 IF(APPLE)
     # assume built-in pthreads on MacOS
-    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-    set(CMAKE_HAVE_THREADS_LIBRARY 1)
-    set(CMAKE_USE_WIN32_THREADS_INIT 0)
-    set(CMAKE_USE_PTHREADS_INIT 1)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    #-------
+    SET(CMAKE_THREAD_LIBS_INIT "-lpthread")
+    SET(CMAKE_HAVE_THREADS_LIBRARY 1)
+    SET(CMAKE_USE_WIN32_THREADS_INIT 0)
+    SET(CMAKE_USE_PTHREADS_INIT 1)
+    SET(THREADS_PREFER_PTHREAD_FLAG ON)
+    # -------
 
     SET(ENABLE_RAD_TELEMETRY OFF)
 ENDIF()
 
 IF(NOT ENABLE_RAD_TELEMETRY)
-	ADD_DEFINITIONS(-DNTELEMETRY)
+    ADD_DEFINITIONS(-DNTELEMETRY)
 ENDIF()
 
 IF(MONITOR_MEMORY)
@@ -139,7 +148,7 @@ IF(BREAKPAD)
     ADD_DEFINITIONS(-DBREAKPAD=1)
 ENDIF()
 
-MESSAGE( STATUS "Type: ${CMAKE_BUILD_TYPE}" )
+MESSAGE(STATUS "Type: ${CMAKE_BUILD_TYPE}")
 IF(CMAKE_BUILD_TYPE)
     SET(WIN32_DIST_FOLDER "${CMAKE_BUILD_TYPE}")
 ELSE()
@@ -165,15 +174,16 @@ MESSAGE(STATUS "Git version: ${GIT_VERSION}")
 MESSAGE(STATUS "Git rev-list: ${GIT_REV_LIST}")
 MESSAGE(STATUS "Build ID: ${BUILD_ID}")
 
-MATH(EXPR OVERGROWTH_VERSION_NR "${GIT_REV_LIST}+30000") #This version number has to be higher than the old system, but we start fresh on 30000
+# This version number has to be higher than the old system, but we start fresh on 30000
+MATH(EXPR OVERGROWTH_VERSION_NR "${GIT_REV_LIST}+30000")
 
 SET(BUILD_TIMESTAMP "UNKNOWN")
 IF(${CMAKE_VERSION} VERSION_GREATER 2.8.12)
-    string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S UTC" UTC)
-ELSE( ) #In case we are in the steam runtime, otherwise, install newer version of cmake.
+    STRING(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S UTC" UTC)
+ELSE() # In case we are in the steam runtime, otherwise, install newer version of cmake.
     EXECUTE_PROCESS(COMMAND "date" "+%Y-%m-%d %H:%M:%S UTC" OUTPUT_VARIABLE tmp)
     STRING(REPLACE "\n" " " BUILD_TIMESTAMP ${tmp})
-ENDIF( )
+ENDIF()
 
 MESSAGE(STATUS ${out})
 
@@ -190,29 +200,35 @@ IF(APPLE)
         SET(ARCH_OUT "x86_64")
     ENDIF()
     SET(OS_OUT "MacOSX")
-    IF( "${CMAKE_GENERATOR}" STREQUAL "Xcode" )
+    IF("${CMAKE_GENERATOR}" STREQUAL "Xcode")
         SET(CMAKE_OSX_SYSROOT "macosx")
-        SET(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")	
-    ELSEIF( "${CMAKE_GENERATOR}" STREQUAL "Unix Makefiles" )
-        SET(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${CMAKE_OSX_DEPLOYMENT_TARGET}.sdk")
+        SET(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
+    ELSEIF("${CMAKE_GENERATOR}" STREQUAL "Unix Makefiles")
+        SET(CMAKE_OSX_SYSROOT
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${CMAKE_OSX_DEPLOYMENT_TARGET}.sdk"
+        )
     ENDIF()
 ENDIF()
 
-#define platform variables
+# define platform variables
 IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     SET(LINUX TRUE)
 ENDIF()
 
-if(LINUX)
-    OPTION(FORCE32 "Force a 32build on a 64bit host" OFF)
+OPTION(FORCE32 "Force a 32bit build on a 64bit host" OFF)
+IF(FORCE32)
+    MESSAGE(STATUS "Forcing 32-bit...")
+ENDIF()
+
+IF(LINUX)
     SET(OS_OUT "Linux")
 
-    if(FORCE32)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-    endif()
+    IF(FORCE32)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+    ENDIF()
 
-    IF(CMAKE_SIZEOF_VOID_P MATCHES "8" AND NOT(FORCE32))
+    IF(CMAKE_SIZEOF_VOID_P MATCHES "8" AND NOT (FORCE32))
         SET(64BIT_LINUX true)
     ENDIF()
 
@@ -221,33 +237,33 @@ if(LINUX)
         SET(BIN_SUFFIX ".bin.x86_64")
         SET(ARCH_OUT "amd64")
         SET(TOOL_BIN_NAME "bin64")
-        set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
+        SET_PROPERTY(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
     ELSE()
         SET(LIB_SUFFIX "lib")
         SET(BIN_SUFFIX ".bin.x86")
         SET(ARCH_OUT "ix86")
         SET(TOOL_BIN_NAME "bin")
-        set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
+        SET_PROPERTY(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
 
-        ### Ensure LargeFileSupport on 32bit linux
-        set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
-        set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
+        # Ensure LargeFileSupport on 32bit linux
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
     ENDIF()
-endif()
+ENDIF()
 
 IF(WIN32)
     SET(OS_OUT "Windows")
-	
-	IF(CMAKE_SIZEOF_VOID_P MATCHES "8" AND NOT(FORCE32))
+
+    IF(CMAKE_SIZEOF_VOID_P MATCHES "8" AND NOT (FORCE32))
         SET(64BIT_WINDOWS true)
     ENDIF()
-    
+
     IF(64BIT_WINDOWS)
         SET(ARCH_OUT "amd64")
-        set(WINDOWS_LIB_DIR "x64")
+        SET(WINDOWS_LIB_DIR "x64")
     ELSE()
         SET(ARCH_OUT "ix86")
-        set(WINDOWS_LIB_DIR "x86")
+        SET(WINDOWS_LIB_DIR "x86")
     ENDIF()
 ENDIF()
 
@@ -258,41 +274,53 @@ IF(LINUX)
     FIND_PACKAGE(OpenAL REQUIRED)
 ENDIF()
 
-#Build static libraries only for subprojects
-SET(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+# Build static libraries only for subprojects
+SET(BUILD_SHARED_LIBS
+    OFF
+    CACHE BOOL "" FORCE)
 
-#Create subprojects that have their own CMakeLists
+# Create subprojects that have their own CMakeLists
 ADD_SUBDIRECTORY(../Libraries/crunch-r319 crnlib)
 ADD_SUBDIRECTORY(../Libraries/glad glad)
-set(ZSTD_BUILD_PROGRAMS Off)
-set(ZSTD_BUILD_STATIC ON)
-set(ZSTD_BUILD_SHARED Off)
+SET(ZSTD_BUILD_PROGRAMS Off)
+SET(ZSTD_BUILD_STATIC ON)
+SET(ZSTD_BUILD_SHARED Off)
 ADD_SUBDIRECTORY(../Libraries/zstd-1.5.0/build/cmake zstd)
 IF(WIN32)
     # Make sure freetype uses the precompiled 1.2.7 binary
     OPTION(FT_REQUIRE_ZLIB "Overridden on Windows" ON)
-    
-    SET(ZLIB_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/../Libraries/zlib1.2.7/include" CACHE INTERNAL "Precompiled zlib include path")
-    SET(ZLIB_LIBRARY "${PROJECT_SOURCE_DIR}/../Libraries/zlib1.2.7/lib/${WINDOWS_LIB_DIR}/zlib.lib" CACHE INTERNAL "Precompiled zlib library path")
+
+    SET(ZLIB_INCLUDE_DIR
+        "${PROJECT_SOURCE_DIR}/../Libraries/zlib1.2.7/include"
+        CACHE PATH "Precompiled zlib include path")
+    SET(ZLIB_LIBRARY
+        "${PROJECT_SOURCE_DIR}/../Libraries/zlib1.2.7/lib/${WINDOWS_LIB_DIR}/zlib.lib"
+        CACHE PATH "Precompiled zlib library path")
 ENDIF()
 ADD_SUBDIRECTORY(../Libraries/freetype-2.12.1 freetype)
 
-IF(BUILD_OVERGROWTH) 
-    #Create subprojects that have their own CMakeLists
+IF(BUILD_OVERGROWTH)
+    # Create subprojects that have their own CMakeLists
     ADD_SUBDIRECTORY(triangle triangle)
     ADD_SUBDIRECTORY(minizip minizip)
     ADD_SUBDIRECTORY(murmurhash3 murmurhash3)
     ADD_SUBDIRECTORY(binn binn)
     ADD_SUBDIRECTORY(recastnavigation recastnavigation)
     # disable all demos
-    SET(BUILD_DEMOS OFF CACHE BOOL "Set when you want to build the demos for underlying library")
+    SET(BUILD_DEMOS
+        OFF
+        CACHE BOOL "Set when you want to build the demos for underlying library")
     # enable USE_MSVC_RUNTIME_LIBRARY_DLL
-    SET(USE_MSVC_RUNTIME_LIBRARY_DLL ON CACHE BOOL "Use MSVC Runtime Library DLL (/MD or /MDd)")
-    SET(USE_GLUT OFF CACHE BOOL "Use Glut")
+    SET(USE_MSVC_RUNTIME_LIBRARY_DLL
+        ON
+        CACHE BOOL "Use MSVC Runtime Library DLL (/MD or /MDd)")
+    SET(USE_GLUT
+        OFF
+        CACHE BOOL "Use Glut")
     ADD_SUBDIRECTORY(bullet3-2.89 bullet3-2.89)
     ADD_SUBDIRECTORY(angelscript_2_32_0_sdk/angelscript/projects/cmake angelscript_2_32_0_sdk)
 
-    #Put subprojects in the "Support" folder
+    # Put subprojects in the "Support" folder
     SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
     SET_PROPERTY(TARGET murmurhash3 PROPERTY FOLDER "Support")
     SET_PROPERTY(TARGET binn PROPERTY FOLDER "Support")
@@ -311,8 +339,8 @@ IF(BUILD_OVERGROWTH)
     SET_PROPERTY(TARGET HACD PROPERTY FOLDER "Support/BulletPhysics")
     SET_PROPERTY(TARGET LinearMath PROPERTY FOLDER "Support/BulletPhysics")
     IF(WIN32)
- 	    SET_PROPERTY(TARGET App_obj2sdf PROPERTY FOLDER "Support/BulletPhysics")
-	    SET_PROPERTY(TARGET Bullet2FileLoader PROPERTY FOLDER "Support/BulletPhysics")
+        SET_PROPERTY(TARGET App_obj2sdf PROPERTY FOLDER "Support/BulletPhysics")
+        SET_PROPERTY(TARGET Bullet2FileLoader PROPERTY FOLDER "Support/BulletPhysics")
         SET_PROPERTY(TARGET Bullet3Collision PROPERTY FOLDER "Support/BulletPhysics")
         SET_PROPERTY(TARGET Bullet3Common PROPERTY FOLDER "Support/BulletPhysics")
         SET_PROPERTY(TARGET Bullet3Dynamics PROPERTY FOLDER "Support/BulletPhysics")
@@ -332,94 +360,94 @@ IF(BUILD_OVERGROWTH)
     SET_PROPERTY(TARGET HACD PROPERTY FOLDER "Support/BulletPhysics")
 ENDIF()
 
-#Build external projects that don't have a CMakeLists file.
+# Build external projects that don't have a CMakeLists file.
 IF(BREAKPAD)
     IF(LINUX)
-        ExternalProject_Add(breakpad
+        EXTERNALPROJECT_ADD(
+            breakpad
             SOURCE_DIR ${CMAKE_SOURCE_DIR}/../Libraries/breakpad/
             CONFIGURE_COMMAND ${CMAKE_SOURCE_DIR}/../Libraries/breakpad/configure
             BUILD_COMMAND make
-            INSTALL_COMMAND "echo"
-        )
+            INSTALL_COMMAND "echo")
     ENDIF()
 ENDIF()
 
 IF(APPLE)
-    SET(PLATFORM_PREFIX             "macosx")
+    SET(PLATFORM_PREFIX "macosx")
 
-    ## NOTE setting the rpath this way only works with CMAKE 2.8.12+
-    # A workaround for 2.8.11 is do also set 
+    # NOTE setting the rpath this way only works with CMAKE 2.8.12+ 
+    # A workaround for 2.8.11 is to also set
     # set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS ${BIN_RPATH})
-    ##
-    
+
     SET(BIN_RPATH "@executable_path/../Frameworks")
 
-    SET(CMAKE_SKIP_BUILD_RPATH              TRUE)
-    SET(CMAKE_BUILD_WITH_INSTALL_RPATH      TRUE)
-    SET(CMAKE_INSTALL_RPATH                 ${BIN_RPATH})
-    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH   FALSE)
+    SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+    SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    SET(CMAKE_INSTALL_RPATH ${BIN_RPATH})
+    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 ENDIF()
 
 IF(FORCE_OPENGL_ERROR_CHECKING)
+
 ELSE()
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNO_GL_ERROR_CHECKING=1")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNO_GL_ERROR_CHECKING=1")
 ENDIF()
 
 # Add preprocessor definitions so that the code can use platform #ifdefs
 IF(LINUX)
     ADD_DEFINITIONS(${GTK2_DEFINITIONS})
 
-    #-no-strict-aliasing for the sake of angelscript
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -rdynamic -g -fno-omit-frame-pointer") #We add G because we want to be able to debug the coredump
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -rdynamic -fno-omit-frame-pointer")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -rdynamic -fno-omit-frame-pointer")
+    # -no-strict-aliasing for the sake of angelscript
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+    # We add G because we want to be able to debug the coredump
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -rdynamic -g -fno-omit-frame-pointer")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -rdynamic -fno-omit-frame-pointer")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -rdynamic -fno-omit-frame-pointer")
 
 ENDIF()
 
 IF(APPLE)
-    #-no-strict-aliasing for the sake of angelscript
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-strict-aliasing")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    # -no-strict-aliasing for the sake of angelscript
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-strict-aliasing")
+    SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 ENDIF()
 
-#define _DEPLOY for Release target
+# define _DEPLOY for Release target
 IF(DEPLOY)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEPLOY")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEPLOY")
 ELSE()
-  # if not building release target, export compile commands for use with a
-  # language server
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    # if not building release target, export compile commands for use with a language server
+    SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ENDIF()
 
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
-#enable .pdb symbol generation for Release target on Windows
-IF(WIN32) 
-    #Disable warnings when using standard c functions in visual studio
+# enable .pdb symbol generation for Release target on Windows
+IF(WIN32)
+    # Disable warnings when using standard c functions in visual studio
     ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GF -D_CRT_SECURE_NO_WARNINGS -DNEED_SNPRINTF_ONLY /EHsc")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /debug")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
-    set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GF -D_CRT_SECURE_NO_WARNINGS -DNEED_SNPRINTF_ONLY /EHsc")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+    SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /debug")
+    SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
+    SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
 
     IF(BUILD_SERVER)
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
-        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /GL")
-        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
-        set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /GL")
+        SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
+        SET(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
     ENDIF()
 ENDIF()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DOG_DEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DOG_DEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DOG_DEBUG")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DOG_DEBUG")
 
 SET(SRCDIR "${CMAKE_SOURCE_DIR}/../Source")
 SET(LIBDIR "${CMAKE_SOURCE_DIR}/../Libraries")
@@ -429,42 +457,38 @@ SET(DATADIR "${CMAKE_SOURCE_DIR}/../Data")
 FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/Data)
 
 IF(UNIX)
-    ADD_CUSTOM_COMMAND( 
-        OUTPUT always
-        COMMAND echo > /dev/null
-    )
-    ADD_CUSTOM_COMMAND( 
+    ADD_CUSTOM_COMMAND(OUTPUT always COMMAND echo > /dev/null)
+    ADD_CUSTOM_COMMAND(
         OUTPUT ${SRCDIR}/Version/git_version.cpp
         DEPENDS always
-        COMMAND printf 'const int none=-1\;\\nextern const int phoenix_build_id=%s\;\\nconst char* phoenix_platform=\"%s\"\;\\nconst char* phoenix_arch=\"%s\"\;\\nconst char* phoenix_git_version_string=\"%s\"\;\\nconst char* phoenix_build_timestamp=\"%s\"\;\\n' "${BUILD_ID}" "${OS_OUT}" "${ARCH_OUT}" "${GIT_VERSION}" "${BUILD_TIMESTAMP}" > '${SRCDIR}/Version/git_version.cpp'
-    )
+        COMMAND
+            printf
+            'const int none=-1\;\\nextern const int phoenix_build_id=%s\;\\nconst char* phoenix_platform=\"%s\"\;\\nconst char* phoenix_arch=\"%s\"\;\\nconst char* phoenix_git_version_string=\"%s\"\;\\nconst char* phoenix_build_timestamp=\"%s\"\;\\n'
+            "${BUILD_ID}" "${OS_OUT}" "${ARCH_OUT}" "${GIT_VERSION}" "${BUILD_TIMESTAMP}" >
+            '${SRCDIR}/Version/git_version.cpp')
 ELSEIF(WIN32)
-    ADD_CUSTOM_COMMAND( 
-        OUTPUT always
-        COMMAND echo
-    )
-    ADD_CUSTOM_COMMAND( 
+    ADD_CUSTOM_COMMAND(OUTPUT always COMMAND echo)
+    ADD_CUSTOM_COMMAND(
         OUTPUT ${SRCDIR}/Version/git_version.cpp
         DEPENDS always
-        COMMAND echo const int none=-1\; extern const int phoenix_build_id=${BUILD_ID}\; const char* phoenix_platform=\"${OS_OUT}\"\; const char* phoenix_arch=\"${ARCH_OUT}\"\; const char* phoenix_git_version_string=\"${GIT_VERSION}\"\; const char* phoenix_build_timestamp=\"${BUILD_TIMESTAMP}\"\; > ${SRCDIR}/Version/git_version.cpp
-    )
+        COMMAND
+            echo const int none=-1\; extern const int phoenix_build_id=${BUILD_ID}\; const char*
+            phoenix_platform=\"${OS_OUT}\"\; const char* phoenix_arch=\"${ARCH_OUT}\"\; const char*
+            phoenix_git_version_string=\"${GIT_VERSION}\"\; const char*
+            phoenix_build_timestamp=\"${BUILD_TIMESTAMP}\"\; > ${SRCDIR}/Version/git_version.cpp)
 ELSE()
-    ADD_CUSTOM_COMMAND( 
+    ADD_CUSTOM_COMMAND(
         OUTPUT ${SRCDIR}/Version/git_version.cpp
-        COMMAND ${CMAKE_COMMAND} -E copy "${SRCDIR}/Version/fallback_version.c" "${SRCDIR}/Version/git_version.cpp"
-    )
+        COMMAND ${CMAKE_COMMAND} -E copy "${SRCDIR}/Version/fallback_version.c" "${SRCDIR}/Version/git_version.cpp")
 ENDIF()
 
 IF(LINUX)
     SET(BIN_RPATH "\$ORIGIN/${LIB_SUFFIX}")
     SET(LIB_ROOT ${LIBDIR}/Linux/${LIB_SUFFIX})
 
-    #Only use the built in library folder if we are on the build server and using the 
-    #steam runtime environment.
-    IF(BUILD_SERVER) 
-        LINK_DIRECTORIES(
-            ${LIB_ROOT}
-        )
+    # Only use the built in library folder if we are on the build server and using the steam runtime environment.
+    IF(BUILD_SERVER)
+        LINK_DIRECTORIES(${LIB_ROOT})
     ENDIF()
 
     # Don't use -rpath.
@@ -474,46 +498,36 @@ IF(LINUX)
     SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
     SET(CMAKE_EXECUTABLE_SUFFIX ${BIN_SUFFIX})
-    
+
     IF(64BIT_LINUX)
         SET(LINUX_LIB_DIR "linux64")
     ELSE()
         SET(LINUX_LIB_DIR "linux32")
     ENDIF()
 
-    LINK_DIRECTORIES(
-        ${SDL2_LIBRARY}
-        ${SDL2NET_LIBRARY}
-    ) 
+    LINK_DIRECTORIES(${SDL2_LIBRARY} ${SDL2NET_LIBRARY})
 
     IF(ENABLE_RAD_TELEMETRY)
-	    LINK_DIRECTORIES(
-		${PLIBDIR}/Telemetry2SDKLinux_20P3/lib
-	    ) 
+        LINK_DIRECTORIES(${PLIBDIR}/Telemetry2SDKLinux_20P3/lib)
     ENDIF()
 
-
     IF(BREAKPAD)
-        LINK_DIRECTORIES( 
-            "${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/client/linux/"
-        )
+        LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/client/linux/")
     ENDIF()
 
     IF(ENABLE_STEAMWORKS)
-        LINK_DIRECTORIES( 
-            "${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/${LINUX_LIB_DIR}"
-        )
+        LINK_DIRECTORIES("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/${LINUX_LIB_DIR}")
     ENDIF()
 ENDIF()
 
 IF(WIN32)
-	IF(MSVC_VERSION GREATER 1910)
-		set(VERSION_DIR "17")
-		MESSAGE(STATUS "Building for VS2017 or later, using MSVC1911 libraries where needed")
-	ELSE()
-		set(VERSION_DIR "12")
-	ENDIF()
-    
+    IF(MSVC_VERSION GREATER 1910)
+        SET(VERSION_DIR "17")
+        MESSAGE(STATUS "Building for VS2017 or later, using MSVC1911 libraries where needed")
+    ELSE()
+        SET(VERSION_DIR "12")
+    ENDIF()
+
     LINK_DIRECTORIES(
         ${LIBDIR}/SDL2-2.0.20/lib/${WINDOWS_LIB_DIR}
         ${LIBDIR}/SDL2_net-2.0.1/lib/${WINDOWS_LIB_DIR}
@@ -523,34 +537,35 @@ IF(WIN32)
         ${LIBDIR}/nvapi/${WINDOWS_LIB_DIR}
         ${LIBDIR}/zlib1.2.7/lib/${WINDOWS_LIB_DIR}
         ${LIBDIR}/openvr-master/lib/win/${WINDOWS_LIB_DIR}
-	    ${LIBDIR}/breakpad/src/client/windows/lib/${WINDOWS_LIB_DIR}
+        ${LIBDIR}/breakpad/src/client/windows/lib/${WINDOWS_LIB_DIR}
         ${LIBDIR}/xinput/Lib/x86
-        ${LIBDIR}/NvToolsExt/lib/Win32
-    )
+        ${LIBDIR}/NvToolsExt/lib/Win32)
 
     IF(ENABLE_RAD_TELEMETRY)
-        LINK_DIRECTORIES(
-            ${PLIBDIR}/Telemetry2SDKWin32_20P3/lib/${WINDOWS_LIB_DIR}
-        )
+        LINK_DIRECTORIES(${PLIBDIR}/Telemetry2SDKWin32_20P3/lib/${WINDOWS_LIB_DIR})
     ENDIF()
 ENDIF()
 
-
-IF(APPLE)    
-    LINK_DIRECTORIES(
-        ${LIBDIR}/libogg-1.3.3/lib/mac64
-        ${LIBDIR}/libvorbis-1.3.6/lib/mac64
-    )
+IF(APPLE)
+    LINK_DIRECTORIES(${LIBDIR}/libogg-1.3.3/lib/mac64 ${LIBDIR}/libvorbis-1.3.6/lib/mac64)
 
     IF(ENABLE_STEAMWORKS)
-        LINK_DIRECTORIES(
-            ${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/osx
-        )
+        LINK_DIRECTORIES(${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/osx)
     ENDIF()
 
-    FIND_LIBRARY(SDL_FRAMEWORK SDL2 PATHS ${LIBDIR}/SDL2-2.0.20 NO_DEFAULT_PATH)
-    FIND_LIBRARY(SDL2NET_FRAMEWORK SDL2_net PATHS ${LIBDIR}/SDL2_net-2.0.1 NO_DEFAULT_PATH)
-    FIND_PATH(SDL2_INCLUDE_DIR NAMES SDL.h PATHS ${SDL_FRAMEWORK}/Headers NO_DEFAULT_PATH)
+    FIND_LIBRARY(
+        SDL_FRAMEWORK SDL2
+        PATHS ${LIBDIR}/SDL2-2.0.20
+        NO_DEFAULT_PATH)
+    FIND_LIBRARY(
+        SDL2NET_FRAMEWORK SDL2_net
+        PATHS ${LIBDIR}/SDL2_net-2.0.1
+        NO_DEFAULT_PATH)
+    FIND_PATH(
+        SDL2_INCLUDE_DIR
+        NAMES SDL.h
+        PATHS ${SDL_FRAMEWORK}/Headers
+        NO_DEFAULT_PATH)
     FIND_LIBRARY(OPENAL_FRAMEWORK OpenAL)
     FIND_LIBRARY(CARBON_FRAMEWORK Carbon)
     FIND_LIBRARY(AU_FRAMEWORK AudioUnit)
@@ -571,20 +586,12 @@ IF(APPLE)
         ${IOKIT_FRAMEWORK}
         ${APPKIT_FRAMEWORK}
         ${SDL_FRAMEWORK}
-        ${SDL2NET_FRAMEWORK}
-    )
+        ${SDL2NET_FRAMEWORK})
 ENDIF()
 
-ADD_DEFINITIONS(
-    -DHAVE_MIXCFG_H
-    -DTIXML_USE_STL
-    -DIMGUI_ENABLE_FREETYPE
-) 
+ADD_DEFINITIONS(-DHAVE_MIXCFG_H -DTIXML_USE_STL -DIMGUI_ENABLE_FREETYPE)
 
-INCLUDE_DIRECTORIES(SYSTEM
-    ${LIBDIR}/crunch-r319/crnlib
-    ${LIBDIR}/crunch-r319/inc
-)
+INCLUDE_DIRECTORIES(SYSTEM ${LIBDIR}/crunch-r319/crnlib ${LIBDIR}/crunch-r319/inc)
 
 INCLUDE_DIRECTORIES(
     ${SRCDIR}
@@ -609,28 +616,21 @@ INCLUDE_DIRECTORIES(
     ${LIBDIR}/recastnavigation/DetourCrowd/Include
     ${LIBDIR}/zstd-1.5.0/lib
     ${LIBDIR}/binn-3.0/src
-    ${LIBDIR}/freetype-2.12.1/include
-)
+    ${LIBDIR}/freetype-2.12.1/include)
 
 IF(ENABLE_STEAMWORKS)
-    INCLUDE_DIRECTORIES(
-        ${PLIBDIR}/steamworks_1.51/sdk/public/steam
-    )
+    INCLUDE_DIRECTORIES(${PLIBDIR}/steamworks_1.51/sdk/public/steam)
 ELSEIF(ENABLE_GAMENETWORKINGSOCKETS)
-    INCLUDE_DIRECTORIES(
-        ${LIBDIR}/GameNetworkingSockets-1.4.0/include/steam
-    )
+    INCLUDE_DIRECTORIES(${LIBDIR}/GameNetworkingSockets-1.4.0/include/steam)
 ENDIF()
 
 IF(BREAKPAD)
-    INCLUDE_DIRECTORIES(
-        ${LIBDIR}/breakpad/src
-    )
+    INCLUDE_DIRECTORIES(${LIBDIR}/breakpad/src)
 ENDIF()
 
 IF(LINUX)
     MESSAGE(STATUS "SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
-    
+
     INCLUDE_DIRECTORIES(
         LinuxInclude
         ${GTK2_INCLUDE_DIRS}
@@ -638,57 +638,45 @@ IF(LINUX)
         ${SDL2NET_INCLUDE_DIR}
         ${LIBDIR}/Linux/include
         ${LIBDIR}/Linux/include/AL
-        ${LIBDIR}/${FFTW_DIR}
-    )
+        ${LIBDIR}/${FFTW_DIR})
 
     IF(ENABLE_RAD_TELEMETRY)
-    INCLUDE_DIRECTORIES(
-        ${PLIBDIR}/Telemetry2SDKLinux_20P3/include
-	)
-    ENDIF()
-ENDIF() 
-
-if(WIN32)
-    INCLUDE_DIRECTORIES(
-      ${LIBDIR}/SDL2-2.0.20/include
-      ${LIBDIR}/SDL2_net-2.0.1/include
-      ${LIBDIR}/zlib1.2.7/include
-      ${LIBDIR}/ogg/include
-      ${LIBDIR}/vorbis/include
-      ${LIBDIR}/NvToolsExt/include
-      ${SDL2_SOURCE_DIR}/include
-      "${LIBDIR}/openal-soft-1.18.0-bin/include/AL"
-      ${LIBDIR}/${FFTW_DIR}
-    )
-
-    IF(ENABLE_RAD_TELEMETRY)
-        INCLUDE_DIRECTORIES(
-            ${PLIBDIR}/Telemetry2SDKWin32_20P3/include
-            ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu
-       )
+        INCLUDE_DIRECTORIES(${PLIBDIR}/Telemetry2SDKLinux_20P3/include)
     ENDIF()
 ENDIF()
 
-if(APPLE)
+IF(WIN32)
     INCLUDE_DIRECTORIES(
-        #${LIBDIR}/../MacInterfaces/
+        ${LIBDIR}/SDL2-2.0.20/include
+        ${LIBDIR}/SDL2_net-2.0.1/include
+        ${LIBDIR}/zlib1.2.7/include
+        ${LIBDIR}/ogg/include
+        ${LIBDIR}/vorbis/include
+        ${LIBDIR}/NvToolsExt/include
+        ${SDL2_SOURCE_DIR}/include
+        "${LIBDIR}/openal-soft-1.18.0-bin/include/AL"
+        ${LIBDIR}/${FFTW_DIR})
+
+    IF(ENABLE_RAD_TELEMETRY)
+        INCLUDE_DIRECTORIES(${PLIBDIR}/Telemetry2SDKWin32_20P3/include ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu)
+    ENDIF()
+ENDIF()
+
+IF(APPLE)
+    INCLUDE_DIRECTORIES(
+        # ${LIBDIR}/../MacInterfaces/
         ${LIBDIR}/libogg-1.3.3/include
         ${LIBDIR}/libvorbis-1.3.6/include
         ${LIBDIR}/SDL2-2.0.20/SDL2.framework/Headers
         ${LIBDIR}/SDL2_net-2.0.1/SDL2_net.framework/Headers
         ${SDL2_SOURCE_DIR}/include
         ${SDL2_INCLUDE_DIR}
-	    /opt/X11/include
-    )
+        /opt/X11/include)
 
     IF(ENABLE_RAD_TELEMETRY)
-        INCLUDE_DIRECTORIES(
-            ${PLIBDIR}/Telemetry2SDKMac_20P3/include
-            ${PLIBDIR}/Telemetry2SDKMac_20P3/src/gpu
-        )
+        INCLUDE_DIRECTORIES(${PLIBDIR}/Telemetry2SDKMac_20P3/include ${PLIBDIR}/Telemetry2SDKMac_20P3/src/gpu)
     ENDIF()
 ENDIF()
-
 
 SET(IMGUI_SRCS
     ${LIBDIR}/imgui-1.85/imgui.cpp
@@ -699,46 +687,37 @@ SET(IMGUI_SRCS
     ${LIBDIR}/imgui-1.85/imgui_color_picker.cpp
     ${LIBDIR}/imgui-1.85/implot.cpp
     ${LIBDIR}/imgui-1.85/implot_items.cpp
-    ${LIBDIR}/imgui-1.85/misc/freetype/imgui_freetype.cpp
-)
+    ${LIBDIR}/imgui-1.85/misc/freetype/imgui_freetype.cpp)
 
-ADD_LIBRARY( imgui STATIC
-    ${IMGUI_SRCS}
-)
+ADD_LIBRARY(imgui STATIC ${IMGUI_SRCS})
 
-TARGET_LINK_LIBRARIES( imgui PUBLIC 
-    freetype    
-)
+TARGET_LINK_LIBRARIES(imgui PUBLIC freetype)
 
 SET_PROPERTY(TARGET imgui PROPERTY FOLDER "Support")
 
-FILE(GLOB TINYXML_SRCS
+FILE(
+    GLOB
+    TINYXML_SRCS
     ${LIBDIR}/tinyxml/tinystr.cpp
     ${LIBDIR}/tinyxml/tinyxml.cpp
     ${LIBDIR}/tinyxml/tinyxmlerror.cpp
     ${LIBDIR}/tinyxml/tinyxmlparser.cpp
     ${LIBDIR}/tinyxml/tinystr.h
-    ${LIBDIR}/tinyxml/tinyxml.h
-)
+    ${LIBDIR}/tinyxml/tinyxml.h)
 
-ADD_LIBRARY( tinyxml STATIC
-    ${TINYXML_SRCS}
-) 
+ADD_LIBRARY(tinyxml STATIC ${TINYXML_SRCS})
 
 SET_PROPERTY(TARGET tinyxml PROPERTY FOLDER "Support")
 
-file(GLOB TREX_SRCS
-    ${LIBDIR}/trex/trex.cpp
-    ${LIBDIR}/trex/trex.h
-)
+FILE(GLOB TREX_SRCS ${LIBDIR}/trex/trex.cpp ${LIBDIR}/trex/trex.h)
 
-ADD_LIBRARY( trex STATIC
-    ${TREX_SRCS}
-)
+ADD_LIBRARY(trex STATIC ${TREX_SRCS})
 
 SET_PROPERTY(TARGET trex PROPERTY FOLDER "Support")
 
-SET(LOG_LEVEL 4 CACHE INTEGER "Set Logging level from 1=Fatal to 6=Spam, default 4=Info")
+SET(LOG_LEVEL
+    4
+    CACHE STRING "Set Logging level from 1=Fatal to 6=Spam, default 4=Info")
 MESSAGE(STATUS "Log level: ${LOG_LEVEL}")
 ADD_DEFINITIONS(-DLOG_LEVEL=${LOG_LEVEL})
 
@@ -747,55 +726,39 @@ IF(NOT AUX_DATA STREQUAL "")
     ADD_DEFINITIONS(-DAUX_DATA=\"${AUX_DATA_FP}\")
 ENDIF()
 
-include(SourceUtils)
+INCLUDE(SourceUtils)
 
-ADD_LIBRARY( OvergrowthLogging STATIC)
-target_add_grouped_source(OvergrowthLogging Logging)
+ADD_LIBRARY(OvergrowthLogging STATIC)
+TARGET_ADD_GROUPED_SOURCE(OvergrowthLogging Logging)
 
-ADD_LIBRARY( OvergrowthCompat STATIC
-    ${SRCDIR}/Compat/compat.h
-    ${SRCDIR}/Compat/fileio.cpp
-    ${SRCDIR}/Compat/fileio.h 
-    ${SRCDIR}/Compat/filepath.h  
-)
+ADD_LIBRARY(OvergrowthCompat STATIC ${SRCDIR}/Compat/compat.h ${SRCDIR}/Compat/fileio.cpp ${SRCDIR}/Compat/fileio.h
+                                    ${SRCDIR}/Compat/filepath.h)
 
 IF(UNIX)
-    TARGET_SOURCES(OvergrowthCompat PRIVATE
-        ${SRCDIR}/Compat/UNIX/unix_filepath.cpp
-        ${SRCDIR}/Compat/UNIX/unix_compat.cpp
-        ${SRCDIR}/Compat/UNIX/unix_compat.h
-    )
+    TARGET_SOURCES(OvergrowthCompat PRIVATE ${SRCDIR}/Compat/UNIX/unix_filepath.cpp
+                                            ${SRCDIR}/Compat/UNIX/unix_compat.cpp ${SRCDIR}/Compat/UNIX/unix_compat.h)
 ENDIF()
 
 IF(LINUX)
-    TARGET_SOURCES(OvergrowthCompat PRIVATE
-        ${SRCDIR}/Compat/Linux/linux_compat.cpp
-        ${SRCDIR}/Compat/Linux/linux_compat.h
-    )
+    TARGET_SOURCES(OvergrowthCompat PRIVATE ${SRCDIR}/Compat/Linux/linux_compat.cpp
+                                            ${SRCDIR}/Compat/Linux/linux_compat.h)
 ENDIF()
 
 IF(APPLE)
-    TARGET_SOURCES(OvergrowthCompat PRIVATE
-        ${SRCDIR}/Compat/Mac/mac_compat.mm
-        ${SRCDIR}/Compat/Mac/mac_compat.h
-    )
+    TARGET_SOURCES(OvergrowthCompat PRIVATE ${SRCDIR}/Compat/Mac/mac_compat.mm ${SRCDIR}/Compat/Mac/mac_compat.h)
 
-    TARGET_LINK_LIBRARIES(OvergrowthCompat PRIVATE
-        ${COCOA_FRAMEWORK}
-        ${CORE_FOUNDATION_FRAMEWORK}
-    )
+    TARGET_LINK_LIBRARIES(OvergrowthCompat PRIVATE ${COCOA_FRAMEWORK} ${CORE_FOUNDATION_FRAMEWORK})
 ENDIF()
 
 IF(WIN32)
-    TARGET_SOURCES(OvergrowthCompat PRIVATE
-        ${SRCDIR}/Compat/Win/win_compat.cpp 
-        ${SRCDIR}/Compat/Win/win_compat.h
-        ${SRCDIR}/Compat/Win/win_filepath.cpp
-    )
+    TARGET_SOURCES(OvergrowthCompat PRIVATE ${SRCDIR}/Compat/Win/win_compat.cpp ${SRCDIR}/Compat/Win/win_compat.h
+                                            ${SRCDIR}/Compat/Win/win_filepath.cpp)
 ENDIF()
 
-IF(LINUX AND BUILD_OGDA) #Making Ogda linux only for now.
-    FILE(GLOB OGDA_SRCS RELATIVE ${CMAKE_SOURCE_DIR}
+IF(LINUX AND BUILD_OGDA) # Making Ogda linux only for now.
+    FILE(
+        GLOB OGDA_SRCS
+        RELATIVE ${CMAKE_SOURCE_DIR}
         ${SRCDIR}/Threading/thread_sanity.cpp
         ${SRCDIR}/Threading/thread_sanity.h
         ${SRCDIR}/Asset/assetbase.h
@@ -856,8 +819,7 @@ IF(LINUX AND BUILD_OGDA) #Making Ogda linux only for now.
         ${SRCDIR}/JSON/*.cpp
         ${SRCDIR}/JSON/*.h
         ${SRCDIR}/Memory/*.cpp
-        ${SRCDIR}/Memory/*.h
-    )
+        ${SRCDIR}/Memory/*.h)
 
     IF(WIN32)
         IF(MSVC_VERSION LESS 1911)
@@ -865,15 +827,14 @@ IF(LINUX AND BUILD_OGDA) #Making Ogda linux only for now.
         ENDIF()
 
         IF(ENABLE_RAD_TELEMETRY)
-            LIST(APPEND OGDA_SRCS
-                ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu/gpu_opengl.cpp
-            )
+            LIST(APPEND OGDA_SRCS ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu/gpu_opengl.cpp)
         ENDIF()
     ENDIF()
 
-    ADD_EXECUTABLE(Ogda ${SRCDIR}/Version/git_version.cpp ${OGDA_SRCS} )
+    ADD_EXECUTABLE(Ogda ${SRCDIR}/Version/git_version.cpp ${OGDA_SRCS})
 
-    TARGET_LINK_LIBRARIES(Ogda
+    TARGET_LINK_LIBRARIES(
+        Ogda
         OvergrowthCompat
         OvergrowthLogging
         tinyxml
@@ -881,13 +842,9 @@ IF(LINUX AND BUILD_OGDA) #Making Ogda linux only for now.
         murmurhash3
         pthread
         crnlib
-        glad
-    )
+        glad)
 
-    SET_TARGET_PROPERTIES(Ogda PROPERTIES
-        COMPILE_DEFINITIONS OGDA=1
-        COMPILE_FLAGS "-w"
-    )
+    SET_TARGET_PROPERTIES(Ogda PROPERTIES COMPILE_DEFINITIONS OGDA=1 COMPILE_FLAGS "-w")
 ENDIF()
 
 ADD_DEFINITIONS(-DUNIT_TESTS)
@@ -967,7 +924,6 @@ SET(OVERGROWTH_INTERNAL_SRCS
     ${SRCDIR}/Internal/assetpreload.h
     ${SRCDIR}/Internal/locale.cpp
     ${SRCDIR}/Internal/locale.h
-
     ${SRCDIR}/Compat/hardware_info.h
     ${SRCDIR}/Compat/time.cpp
     ${SRCDIR}/Compat/time.h
@@ -975,94 +931,73 @@ SET(OVERGROWTH_INTERNAL_SRCS
     ${SRCDIR}/Compat/platformsetup.cpp
     ${SRCDIR}/Compat/platformsetup.h
     ${SRCDIR}/Compat/processpool.cpp
-    ${SRCDIR}/Compat/processpool.h
-)
+    ${SRCDIR}/Compat/processpool.h)
 
 IF(LINUX)
-    LIST(APPEND OVERGROWTH_INTERNAL_SRCS 
-        ${SRCDIR}/Compat/Linux/os_dialogs_linux.cpp
-        ${SRCDIR}/Compat/Linux/linux_hardware_info.cpp
-    )
+    LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${SRCDIR}/Compat/Linux/os_dialogs_linux.cpp
+         ${SRCDIR}/Compat/Linux/linux_hardware_info.cpp)
 ENDIF()
 
-
 IF(APPLE)
-    LIST(APPEND OVERGROWTH_INTERNAL_SRCS 
-        ${SRCDIR}/Compat/Mac/os_dialogs_mac.mm
-        ${SRCDIR}/Compat/Mac/os_file_dialogs_mac.mm
-        ${SRCDIR}/Compat/Mac/os_file_dialogs_mac.h
-        ${SRCDIR}/Compat/Mac/mac_hardware_info.cpp
-    )
+    LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${SRCDIR}/Compat/Mac/os_dialogs_mac.mm
+         ${SRCDIR}/Compat/Mac/os_file_dialogs_mac.mm ${SRCDIR}/Compat/Mac/os_file_dialogs_mac.h
+         ${SRCDIR}/Compat/Mac/mac_hardware_info.cpp)
 ENDIF()
 
 IF(WIN32)
-	LIST(APPEND OVERGROWTH_INTERNAL_SRCS 
-            ${SRCDIR}/Compat/Win/os_dialogs_win.cpp
-            ${SRCDIR}/Compat/Win/win_hardware_info.cpp
-	)
+    LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${SRCDIR}/Compat/Win/os_dialogs_win.cpp
+         ${SRCDIR}/Compat/Win/win_hardware_info.cpp)
 
-	IF(MSVC_VERSION LESS 1911)
-		LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${SRCDIR}/Internal/snprintf.c)
-	ENDIF()    
+    IF(MSVC_VERSION LESS 1911)
+        LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${SRCDIR}/Internal/snprintf.c)
+    ENDIF()
 
-	IF(ENABLE_RAD_TELEMETRY)
-	    LIST(APPEND OVERGROWTH_INTERNAL_SRCS 
-                ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu/gpu_opengl.cpp
-            )
-	ENDIF()
+    IF(ENABLE_RAD_TELEMETRY)
+        LIST(APPEND OVERGROWTH_INTERNAL_SRCS ${PLIBDIR}/Telemetry2SDKWin32_20P3/src/gpu/gpu_opengl.cpp)
+    ENDIF()
 ENDIF()
 
-LIST(APPEND OVERGROWTH_SRCS
-    ${OVERGROWTH_INTERNAL_SRCS}
-    ${LIBDIR}/opengl.h
-    ${SRCDIR}/Version/version.h
-    ${SRCDIR}/Version/version.cpp
-)
+LIST(APPEND OVERGROWTH_SRCS ${OVERGROWTH_INTERNAL_SRCS} ${LIBDIR}/opengl.h ${SRCDIR}/Version/version.h
+     ${SRCDIR}/Version/version.cpp)
 
 SOURCE_GROUP(Internal FILES ${OVERGROWTH_INTERNAL_SRCS})
 SOURCE_GROUP(ImGui FILES ${IMGUI_SRCS})
 SOURCE_GROUP(TinyXML FILES ${TINYXML_SRCS})
 
-IF(WIN32) 
-    SET(STATIC_LIBS
-        ${STATIC_LIBS}
-        zlib
-        xinput
-        openvr_api
-        nvapi #For NVIDIA video card queries
-        comdlg32 #For WIN32 dialog boxes
-#        dbghelp #For Minidump crash logs
+IF(WIN32)
+    SET(STATIC_LIBS ${STATIC_LIBS} zlib xinput openvr_api nvapi # For NVIDIA video card queries
+                    comdlg32 # For WIN32 dialog boxes
+        # dbghelp #For Minidump crash logs
     )
     IF(BREAKPAD)
         SET(STATIC_LIBS
             ${STATIC_LIBS}
-	    debug exception_handler_D
-            optimized exception_handler
-	    debug common_D
-	    optimized common
-	    debug crash_generation_client_D
-	    optimized crash_generation_client
-	    debug crash_report_sender_D
-	    optimized crash_report_sender
-        )
+            debug
+            exception_handler_D
+            optimized
+            exception_handler
+            debug
+            common_D
+            optimized
+            common
+            debug
+            crash_generation_client_D
+            optimized
+            crash_generation_client
+            debug
+            crash_report_sender_D
+            optimized
+            crash_report_sender)
     ENDIF()
-	IF(ENABLE_RAD_TELEMETRY)
-		SET(STATIC_LIBS
-            ${STATIC_LIBS}
-			telemetry.link
-		)
-	ENDIF()
+    IF(ENABLE_RAD_TELEMETRY)
+        SET(STATIC_LIBS ${STATIC_LIBS} telemetry.link)
+    ENDIF()
 ENDIF()
 
 IF(LINUX)
-    SET(STATIC_LIBS
-        ${STATIC_LIBS}
-    )
+    SET(STATIC_LIBS ${STATIC_LIBS})
     IF(ENABLE_RAD_TELEMETRY)
-        SET(STATIC_LIBS
-            ${STATIC_LIBS}
-            TelemetryX64.link
-        )
+        SET(STATIC_LIBS ${STATIC_LIBS} TelemetryX64.link)
     ENDIF()
 ENDIF()
 
@@ -1071,11 +1006,11 @@ IF(APPLE)
 ENDIF()
 
 IF(LINUX)
-    if(64BIT_LINUX)
+    IF(64BIT_LINUX)
         SET(SSE_FLAGS " ")
-    else()
+    ELSE()
         SET(SSE_FLAGS "-msse -msse2")
-    endif()
+    ENDIF()
 ENDIF()
 
 IF(WIN32)
@@ -1083,8 +1018,8 @@ IF(WIN32)
 ENDIF()
 
 IF(WIN32)
-    string (REPLACE "/DWIN32" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    string (REPLACE "/D_WIN32" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    STRING(REPLACE "/DWIN32" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    STRING(REPLACE "/D_WIN32" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 ENDIF()
 
 SET(OVERGROWTHWORKER_SRCS
@@ -1108,31 +1043,30 @@ SET(OVERGROWTHWORKER_SRCS
     ${SRCDIR}/Threading/thread_sanity.cpp
     ${SRCDIR}/Compat/filepath.h
     ${SRCDIR}/Compat/processpool.cpp
-    ${SRCDIR}/Compat/processpool.h
-)
+    ${SRCDIR}/Compat/processpool.h)
 
 IF(WIN32)
     SET(WIN_RESOURCE_FILE icon.rc)
 ENDIF()
 
 IF(BUILD_OVERGROWTH)
-    
-    ADD_EXECUTABLE(OvergrowthWorker ${OVERGROWTHWORKER_SRCS} ${WIN_RESOURCE_FILE})
-    SET_TARGET_PROPERTIES(OvergrowthWorker PROPERTIES
-        OUTPUT_NAME ${OVERGROWTH_WORKER_OUTPUT_NAME}
-        COMPILE_FLAGS ${SSE_FLAGS}
-        COMPILE_DEFINITIONS NO_ERR=1
-        COMPILE_DEFINITIONS OG_WORKER=1
-    )
 
-    TARGET_LINK_LIBRARIES(OvergrowthWorker
+    ADD_EXECUTABLE(OvergrowthWorker ${OVERGROWTHWORKER_SRCS} ${WIN_RESOURCE_FILE})
+    SET_TARGET_PROPERTIES(
+        OvergrowthWorker
+        PROPERTIES OUTPUT_NAME ${OVERGROWTH_WORKER_OUTPUT_NAME}
+                   COMPILE_FLAGS ${SSE_FLAGS}
+                   COMPILE_DEFINITIONS NO_ERR=1
+                   COMPILE_DEFINITIONS OG_WORKER=1)
+
+    TARGET_LINK_LIBRARIES(
+        OvergrowthWorker
         OvergrowthCompat
         OvergrowthLogging
         tinyxml
         trex
         glad
-        crnlib
-    )
+        crnlib)
 
     IF(MSVC)
         ADD_COMPILE_OPTIONS(/permissive-)
@@ -1141,174 +1075,183 @@ IF(BUILD_OVERGROWTH)
     IF(WIN32)
         SET(CMAKE_CXX_STACK_SIZE "4194304")
 
-        TARGET_LINK_LIBRARIES(OvergrowthWorker
-            dbghelp
-        )
+        TARGET_LINK_LIBRARIES(OvergrowthWorker dbghelp)
     ENDIF()
 
     IF(UNIX)
         TARGET_LINK_LIBRARIES(OvergrowthWorker pthread)
     ENDIF()
 
-    ADD_EXECUTABLE(Overgrowth ${SRCDIR}/Version/git_version.cpp ${OVERGROWTH_SRCS} ${WIN_RESOURCE_FILE} )
-    SET_TARGET_PROPERTIES(Overgrowth PROPERTIES
-        OUTPUT_NAME ${OVERGROWTH_OUTPUT_NAME}
-    )
+    ADD_EXECUTABLE(Overgrowth ${SRCDIR}/Version/git_version.cpp ${OVERGROWTH_SRCS} ${WIN_RESOURCE_FILE})
+    SET_TARGET_PROPERTIES(Overgrowth PROPERTIES OUTPUT_NAME ${OVERGROWTH_OUTPUT_NAME})
 
-    target_add_grouped_source(Overgrowth AI)
-    target_add_grouped_source(Overgrowth Asset)
-    target_add_grouped_source(Overgrowth Asset/Asset)
-    target_add_grouped_source(Overgrowth Asset/AssetLoader)
-    target_add_grouped_source(Overgrowth Editors)
-    target_add_grouped_source(Overgrowth Game)
-    target_add_grouped_source(Overgrowth Graphics)
-    target_add_grouped_source(Overgrowth GUI)
-    target_add_grouped_source(Overgrowth GUI/IMUI)
-    target_add_grouped_source(Overgrowth GUI/dimgui)
-    target_add_grouped_source(Overgrowth Images)
-    target_add_grouped_source(Overgrowth Main)
-    target_add_grouped_source(Overgrowth Math)
-    target_add_grouped_source(Overgrowth Objects)
-    target_add_grouped_source(Overgrowth Physics)
-    target_add_grouped_source(Overgrowth Scripting)
-    target_add_grouped_source(Overgrowth Scripting/angelscript)
-    target_add_grouped_source(Overgrowth Scripting/angelscript/add_on/scriptarray)
-    target_add_grouped_source(Overgrowth Scripting/angelscript/add_on/scriptdictionary)
-    target_add_grouped_source(Overgrowth Scripting/angelscript/add_on/scripthelper)
-    target_add_grouped_source(Overgrowth Scripting/angelscript/add_on/scriptstdstring)
-    target_add_grouped_source(Overgrowth Scripting/angelscript/add_on/debugger)
-    target_add_grouped_source(Overgrowth Sound)
-    target_add_grouped_source(Overgrowth Sound/Music)
-    target_add_grouped_source(Overgrowth Sound/Loader)
-    target_add_grouped_source(Overgrowth Sound/AudioFilters)
-    target_add_grouped_source(Overgrowth Threading)
-    target_add_grouped_source(Overgrowth UserInput)
-    target_add_grouped_source(Overgrowth XML)
-    target_add_grouped_source(Overgrowth XML/Parsers)
-    target_add_grouped_source(Overgrowth JSON)
-    target_add_grouped_source(Overgrowth Memory)
-    target_add_grouped_source(Overgrowth Network)
-    #In the future, this should only be activated if we're building for the steam target
-    target_add_grouped_source(Overgrowth Network/Steam)
-    target_add_grouped_source(Overgrowth Network/Basic)
-    target_add_grouped_source(Overgrowth Utility)
-    target_add_grouped_source(Overgrowth Wrappers)
-    target_add_grouped_source(Overgrowth Timing)
-    target_add_grouped_source(Overgrowth Steam)
-    target_add_grouped_source(Overgrowth Online)
-    target_add_grouped_source(Overgrowth Online/Message)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth AI)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Asset)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Asset/Asset)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Asset/AssetLoader)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Editors)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Game)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Graphics)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth GUI)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth GUI/IMUI)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth GUI/dimgui)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Images)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Main)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Math)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Objects)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Physics)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript/add_on/scriptarray)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript/add_on/scriptdictionary)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript/add_on/scripthelper)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript/add_on/scriptstdstring)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Scripting/angelscript/add_on/debugger)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Sound)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Sound/Music)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Sound/Loader)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Sound/AudioFilters)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Threading)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth UserInput)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth XML)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth XML/Parsers)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth JSON)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Memory)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Network)
+    # In the future, this should only be activated if we're building for the steam target
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Network/Steam)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Network/Basic)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Utility)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Wrappers)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Timing)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Steam)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Online)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth Online/Message)
 
     # TODO: Make another target called "DeployRelease" that doesn't include UNIT_TESTS
-    target_add_grouped_source(Overgrowth UnitTests)
+    TARGET_ADD_GROUPED_SOURCE(Overgrowth UnitTests)
 
-    target_add_grouped_script(Overgrowth Scripts)
-    target_add_grouped_script(Overgrowth "Scripts/hotspots")
-    target_add_grouped_shaders(Overgrowth "GLSL") 
+    TARGET_ADD_GROUPED_SCRIPT(Overgrowth Scripts)
+    TARGET_ADD_GROUPED_SCRIPT(Overgrowth "Scripts/hotspots")
+    TARGET_ADD_GROUPED_SHADERS(Overgrowth "GLSL")
 
     IF(WIN32)
-        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES
-            COMPILE_FLAGS "${SSE_FLAGS} /DWIN32"
-        )
+        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} /DWIN32")
         IF(MSVC)
-            SET_TARGET_PROPERTIES(Overgrowth PROPERTIES 
-                COMPILE_FLAGS "${SSE_FLAGS} /DWIN32 /MP"
-            )
-            SET_TARGET_PROPERTIES(Overgrowth PROPERTIES
-	        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/.."
-            )
-	    SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Overgrowth)
+            SET_TARGET_PROPERTIES(Overgrowth PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} /DWIN32 /MP")
+            SET_TARGET_PROPERTIES(Overgrowth PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/..")
+            SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Overgrowth)
         ENDIF()
-        
-        function(CopyDLL start_path end_path)
-            add_custom_command( TARGET Overgrowth POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${start_path}"
-                    "\"$<TARGET_FILE_DIR:Overgrowth>/${end_path}\""
-            )
-        endfunction(CopyDLL)
-        
-        CopyDLL("${CMAKE_SOURCE_DIR}/steam_appid.txt" "")
-        CopyDLL("${LIBDIR}/SDL2-2.0.20/lib/${WINDOWS_LIB_DIR}/SDL2.dll" "")
-        CopyDLL("${LIBDIR}/SDL2_net-2.0.1/lib/${WINDOWS_LIB_DIR}/SDL2_net.dll" "")
+
+        FUNCTION(CopyDLL start_path end_path)
+            ADD_CUSTOM_COMMAND(
+                TARGET Overgrowth
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${start_path}"
+                        "\"$<TARGET_FILE_DIR:Overgrowth>/${end_path}\"")
+        ENDFUNCTION(CopyDLL)
+
+        COPYDLL("${CMAKE_SOURCE_DIR}/steam_appid.txt" "")
+        COPYDLL("${LIBDIR}/SDL2-2.0.20/lib/${WINDOWS_LIB_DIR}/SDL2.dll" "")
+        COPYDLL("${LIBDIR}/SDL2_net-2.0.1/lib/${WINDOWS_LIB_DIR}/SDL2_net.dll" "")
 
         IF(ENABLE_STEAMWORKS)
-                if(64BIT_WINDOWS)
-                    CopyDLL("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/win64/steam_api64.dll" "")
-                else()
-                    CopyDLL("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/${WINDOWS_LIB_DIR}/steam_api.dll" "")
-                endif()
-            ELSEIF(ENABLE_GAMENETWORKINGSOCKETS)
-                CopyDLL("${LIBDIR}/GameNetworkingSockets-1.4.0/win64_bin/GameNetworkingSockets.dll" "")
-                CopyDLL("${LIBDIR}/protobuf/win64_bin/libprotobuf.dll" "")
-                CopyDLL("${LIBDIR}/protobuf/win64_bin/libprotoc.dll" "")
-                CopyDLL("${LIBDIR}/openssl/win64_bin/libssl-1_1-x64" "")
-                CopyDLL("${LIBDIR}/openssl/win64_bin/libcrypto-1_1-x64" "")
+            IF(64BIT_WINDOWS)
+                COPYDLL("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/win64/steam_api64.dll" "")
+            ELSE()
+                COPYDLL("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/${WINDOWS_LIB_DIR}/steam_api.dll" "")
+            ENDIF()
+        ELSEIF(ENABLE_GAMENETWORKINGSOCKETS)
+            COPYDLL("${LIBDIR}/GameNetworkingSockets-1.4.0/win64_bin/GameNetworkingSockets.dll" "")
+            COPYDLL("${LIBDIR}/protobuf/win64_bin/libprotobuf.dll" "")
+            COPYDLL("${LIBDIR}/protobuf/win64_bin/libprotoc.dll" "")
+            COPYDLL("${LIBDIR}/openssl/win64_bin/libssl-1_1-x64" "")
+            COPYDLL("${LIBDIR}/openssl/win64_bin/libcrypto-1_1-x64" "")
         ENDIF()
 
-        CopyDLL("${LIBDIR}/NvToolsExt/bin/Win32/nvToolsExt32_1.dll" "")
-        
-        CopyDLL("${LIBDIR}/openvr-master/bin/win/${WINDOWS_LIB_DIR}/openvr_api.dll" "")
+        COPYDLL("${LIBDIR}/NvToolsExt/bin/Win32/nvToolsExt32_1.dll" "")
 
-        CopyDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/msvcp110.dll" "")
-        CopyDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/msvcr110.dll" "")
-        CopyDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/vccorlib110.dll" "")
-        CopyDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/vcomp110.dll" "")
+        COPYDLL("${LIBDIR}/openvr-master/bin/win/${WINDOWS_LIB_DIR}/openvr_api.dll" "")
 
-        CopyDLL("${LIBDIR}/openal-soft-1.18.2-bin/bin/${WINDOWS_LIB_DIR}/OpenAL32.dll" "")
-        #CopyDLL("${LIBDIR}/openal-soft-1.18.0-bin/bin/wrap_oal.dll" "")
-        
-        CopyDLL("${LIBDIR}/ogg/bin/${WINDOWS_LIB_DIR}/libogg.dll" "")
-        CopyDLL("${LIBDIR}/vorbis/bin/${WINDOWS_LIB_DIR}/libvorbis.dll" "")
-        CopyDLL("${LIBDIR}/vorbis/bin/${WINDOWS_LIB_DIR}/libvorbisfile.dll" "")
-        CopyDLL("${LIBDIR}/zlib1.2.7/bin/${WINDOWS_LIB_DIR}/zlib1.dll" "zlib.dll")
+        COPYDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/msvcp110.dll" "")
+        COPYDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/msvcr110.dll" "")
+        COPYDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/vccorlib110.dll" "")
+        COPYDLL("${LIBDIR}/msvc11redist/${WINDOWS_LIB_DIR}/vcomp110.dll" "")
+
+        COPYDLL("${LIBDIR}/openal-soft-1.18.2-bin/bin/${WINDOWS_LIB_DIR}/OpenAL32.dll" "")
+        # CopyDLL("${LIBDIR}/openal-soft-1.18.0-bin/bin/wrap_oal.dll" "")
+
+        COPYDLL("${LIBDIR}/ogg/bin/${WINDOWS_LIB_DIR}/libogg.dll" "")
+        COPYDLL("${LIBDIR}/vorbis/bin/${WINDOWS_LIB_DIR}/libvorbis.dll" "")
+        COPYDLL("${LIBDIR}/vorbis/bin/${WINDOWS_LIB_DIR}/libvorbisfile.dll" "")
+        COPYDLL("${LIBDIR}/zlib1.2.7/bin/${WINDOWS_LIB_DIR}/zlib1.dll" "zlib.dll")
         IF(ENABLE_RAD_TELEMETRY)
-            #IF(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebIn")
+            # IF(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebIn")
             IF(64BIT_WINDOWS)
-                CopyDLL("${PLIBDIR}/Telemetry2SDKWin32_20P3/redist/telemetry64.dll" "")
+                COPYDLL("${PLIBDIR}/Telemetry2SDKWin32_20P3/redist/telemetry64.dll" "")
             ELSE()
-                CopyDLL("${PLIBDIR}/Telemetry2SDKWin32_20P3/redist/telemetry32.dll" "")
+                COPYDLL("${PLIBDIR}/Telemetry2SDKWin32_20P3/redist/telemetry32.dll" "")
             ENDIF()
         ENDIF()
 
-        ##Dump symbol file if building with breakpad support.
+        # Dump symbol file if building with breakpad support.
         IF(BREAKPAD)
             FIND_PROGRAM(DUMP_SYMS dump_syms "${LIBDIR}/breakpad/src/tools/windows/binaries")
             IF(DUMP_SYMS)
-                ADD_CUSTOM_COMMAND(TARGET Overgrowth POST_BUILD
-                    COMMAND ${DUMP_SYMS} "\"$<TARGET_FILE_DIR:Overgrowth>/${OVERGROWTH_OUTPUT_NAME}.exe\"" ">" "\"$<TARGET_FILE_DIR:Overgrowth>/${OVERGROWTH_OUTPUT_NAME}.exe.sym\""
-                )
-                ADD_CUSTOM_COMMAND(TARGET OvergrowthWorker POST_BUILD
-                    COMMAND ${DUMP_SYMS} "\"$<TARGET_FILE_DIR:OvergrowthWorker>/${OVERGROWTH_WORKER_OUTPUT_NAME}.exe\"" ">" "\"$<TARGET_FILE_DIR:OvergrowthWorker>/${OVERGROWTH_WORKER_OUTPUT_NAME}.exe.sym\""
-                )
+                ADD_CUSTOM_COMMAND(
+                    TARGET Overgrowth
+                    POST_BUILD
+                    COMMAND ${DUMP_SYMS} "\"$<TARGET_FILE_DIR:Overgrowth>/${OVERGROWTH_OUTPUT_NAME}.exe\"" ">"
+                            "\"$<TARGET_FILE_DIR:Overgrowth>/${OVERGROWTH_OUTPUT_NAME}.exe.sym\"")
+                ADD_CUSTOM_COMMAND(
+                    TARGET OvergrowthWorker
+                    POST_BUILD
+                    COMMAND ${DUMP_SYMS} "\"$<TARGET_FILE_DIR:OvergrowthWorker>/${OVERGROWTH_WORKER_OUTPUT_NAME}.exe\""
+                            ">" "\"$<TARGET_FILE_DIR:OvergrowthWorker>/${OVERGROWTH_WORKER_OUTPUT_NAME}.exe.sym\"")
             ELSE()
-                MESSAGE(STATUS "You're missing the program dump_syms from the google breakpad project in your PATH's, this means the .sym files are not being generated after build.")
+                MESSAGE(
+                    STATUS
+                        "You're missing the program dump_syms from the google breakpad project in your PATH's, this means the .sym files are not being generated after build."
+                )
             ENDIF()
         ENDIF()
     ENDIF()
 
     IF(UNIX)
-        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES
-            COMPILE_FLAGS "${SSE_FLAGS}"
-        )
+        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES COMPILE_FLAGS "${SSE_FLAGS}")
     ENDIF()
 
     IF(LINUX)
-        if(BREAKPAD)
-            ADD_CUSTOM_COMMAND(TARGET Overgrowth POST_BUILD
-                COMMAND "${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/tools/linux/dump_syms/dump_syms" "${CMAKE_BINARY_DIR}/${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}" ">" "${CMAKE_BINARY_DIR}/${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}.sym"
-            )
-            ADD_CUSTOM_COMMAND(TARGET OvergrowthWorker POST_BUILD
-                COMMAND "${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/tools/linux/dump_syms/dump_syms" "${CMAKE_BINARY_DIR}/${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" ">" "${CMAKE_BINARY_DIR}/${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}.sym"
-            )
+        IF(BREAKPAD)
+            ADD_CUSTOM_COMMAND(
+                TARGET Overgrowth
+                POST_BUILD
+                COMMAND
+                    "${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/tools/linux/dump_syms/dump_syms"
+                    "${CMAKE_BINARY_DIR}/${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}" ">"
+                    "${CMAKE_BINARY_DIR}/${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}.sym")
+            ADD_CUSTOM_COMMAND(
+                TARGET OvergrowthWorker
+                POST_BUILD
+                COMMAND
+                    "${CMAKE_BINARY_DIR}/breakpad-prefix/src/breakpad-build/src/tools/linux/dump_syms/dump_syms"
+                    "${CMAKE_BINARY_DIR}/${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" ">"
+                    "${CMAKE_BINARY_DIR}/${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}.sym")
 
-            #BREAKPAD required c++11 and that pendantic-errors is turned off.
+            # BREAKPAD required c++11 and that pendantic-errors is turned off.
             SET(BREAKPAD_FLAGS "")
         ENDIF()
 
-        # Disabling strict-aliasing, which is default on gcc because angelscript interface has an api function that requires a return of *void.
-        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES COMPILE_FLAGS "-Wall -Wno-long-long -Wno-variadic-macros -Wno-trigraphs -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function -Wno-reorder -Werror=return-type ${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
+        # Disabling strict-aliasing, which is default on gcc because angelscript interface has an api function that
+        # requires a return of *void.
+        SET_TARGET_PROPERTIES(
+            Overgrowth
+            PROPERTIES
+                COMPILE_FLAGS
+                "-Wall -Wno-long-long -Wno-variadic-macros -Wno-trigraphs -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-function -Wno-reorder -Werror=return-type ${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}"
+        )
     ENDIF()
-        
+
     # Supress all compile warnings because we shouldn't have to care about external code cleanlyness
     SET(EXTERNAL_LIB_COMPILE_FLAGS "${COMPILE_FLAGS} -w")
 
@@ -1317,35 +1260,39 @@ IF(BUILD_OVERGROWTH)
         SET(EXTERNAL_LIB_COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS} -noover")
     ENDIF()
 
-    SET_PROPERTY(TARGET murmurhash3             PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET binn                    PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET angelscript             PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-#   SET_PROPERTY(TARGET game                    PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET triangle                PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET minizip                 PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET glad                    PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET trex                    PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletCollision         PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletDynamics          PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletFileLoader        PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletSoftBody          PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletWorldImporter     PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET BulletXmlWorldImporter  PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET ConvexDecomposition     PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET GIMPACTUtils            PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET HACD                    PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET LinearMath              PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET crnlib                  PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
-    SET_PROPERTY(TARGET OvergrowthWorker        PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET murmurhash3 PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET binn PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET angelscript PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    # SET_PROPERTY(TARGET game PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET triangle PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET minizip PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET glad PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET trex PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletCollision PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletDynamics PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletFileLoader PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletSoftBody PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletWorldImporter PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET BulletXmlWorldImporter PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET ConvexDecomposition PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET GIMPACTUtils PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET HACD PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET LinearMath PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET crnlib PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
+    SET_PROPERTY(TARGET OvergrowthWorker PROPERTY COMPILE_FLAGS "${EXTERNAL_LIB_COMPILE_FLAGS}")
 
     IF(APPLE)
         # Setting -g on angelscript prevents clang from crashing due to a bug in the compiler
-        SET_TARGET_PROPERTIES(angelscript PROPERTIES COMPILE_FLAGS "-g ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
-        SET_TARGET_PROPERTIES(Overgrowth PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
-        SET_TARGET_PROPERTIES(OvergrowthWorker PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
+        SET_TARGET_PROPERTIES(angelscript 
+            PROPERTIES COMPILE_FLAGS "-g ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
+        SET_TARGET_PROPERTIES(Overgrowth 
+            PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
+        SET_TARGET_PROPERTIES(OvergrowthWorker 
+            PROPERTIES COMPILE_FLAGS "${SSE_FLAGS} ${BREAKPAD_FLAGS} ${NON_BREAKPAD_FLAGS}")
     ENDIF()
 
-    TARGET_LINK_LIBRARIES(Overgrowth
+    TARGET_LINK_LIBRARIES(
+        Overgrowth
         OvergrowthCompat
         OvergrowthLogging
         BulletDynamics
@@ -1367,11 +1314,10 @@ IF(BUILD_OVERGROWTH)
         DetourTileCache
         Detour
         crnlib
-	    freetype
+        freetype
         libzstd_static
         ${STATIC_LIBS}
-        ${FLTK_LIBS}
-    )
+        ${FLTK_LIBS})
 
     IF(WIN32)
         IF(64BIT_WINDOWS)
@@ -1379,7 +1325,8 @@ IF(BUILD_OVERGROWTH)
         ELSE()
             SET(STEAM_LIB_PATH "${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/${WINDOWS_LIB_DIR}/steam_api.lib")
         ENDIF()
-        TARGET_LINK_LIBRARIES(Overgrowth
+        TARGET_LINK_LIBRARIES(
+            Overgrowth
             openal32
             opengl32
             libogg
@@ -1389,26 +1336,21 @@ IF(BUILD_OVERGROWTH)
             SDL2main
             SDL2_net
             dbghelp
-            nvToolsExt32_1
-        )
-        
+            nvToolsExt32_1)
+
         IF(ENABLE_STEAMWORKS)
-            TARGET_LINK_LIBRARIES(Overgrowth
-                ${STEAM_LIB_PATH}
-            )
-	ELSEIF(ENABLE_GAMENETWORKINGSOCKETS)
-	    TARGET_LINK_LIBRARIES(Overgrowth
-		${LIBDIR}/GameNetworkingSockets-1.4.0/win64_lib/GameNetworkingSockets.lib
-		${LIBDIR}/protobuf/win64_lib/libprotobuf.lib
-		${LIBDIR}/protobuf/win64_lib/libprotoc.lib
-		${LIBDIR}/openssl/win64_lib/libssl.lib
-		${LIBDIR}/openssl/win64_lib/libcrypto.lib
-            )
-	ENDIF()
+            TARGET_LINK_LIBRARIES(Overgrowth ${STEAM_LIB_PATH})
+        ELSEIF(ENABLE_GAMENETWORKINGSOCKETS)
+            TARGET_LINK_LIBRARIES(
+                Overgrowth ${LIBDIR}/GameNetworkingSockets-1.4.0/win64_lib/GameNetworkingSockets.lib
+                ${LIBDIR}/protobuf/win64_lib/libprotobuf.lib ${LIBDIR}/protobuf/win64_lib/libprotoc.lib
+                ${LIBDIR}/openssl/win64_lib/libssl.lib ${LIBDIR}/openssl/win64_lib/libcrypto.lib)
+        ENDIF()
     ENDIF()
 
     IF(LINUX)
-        TARGET_LINK_LIBRARIES(Overgrowth
+        TARGET_LINK_LIBRARIES(
+            Overgrowth
             SDL2
             ${SDL2NET_LIBRARY}
             openal
@@ -1420,80 +1362,67 @@ IF(BUILD_OVERGROWTH)
             bz2
             png
             jpeg
-	        #nvcore nvmath nvimage squish posh
+            # nvcore nvmath nvimage squish posh
             z
             dl
-            ${GTK2_LIBRARIES}
-        )
+            ${GTK2_LIBRARIES})
 
-	IF(ENABLE_STEAMWORKS)
-            TARGET_LINK_LIBRARIES(Overgrowth
-		    steam_api
-	    )
-	ENDIF()
+        IF(ENABLE_STEAMWORKS)
+            TARGET_LINK_LIBRARIES(Overgrowth steam_api)
+        ENDIF()
 
         IF(BREAKPAD)
-            TARGET_LINK_LIBRARIES(Overgrowth
-                breakpad_client
-            )
-            #Make sure that we build breakpad first.
+            TARGET_LINK_LIBRARIES(Overgrowth breakpad_client)
+            # Make sure that we build breakpad first.
             ADD_DEPENDENCIES(Overgrowth breakpad)
             ADD_DEPENDENCIES(OvergrowthWorker breakpad)
         ENDIF()
     ENDIF()
 
     IF(APPLE)
-        TARGET_LINK_LIBRARIES(Overgrowth
-            ${FRAMEWORKS}
-            #${PLIBDIR}/Telemetry2SDKMac_20P3/lib/libTelemetryMacX86.link.a
-            ogg
-            vorbis
-            vorbisfile
-            bz2
-        )
-	IF(ENABLE_STEAMWORKS)
-            TARGET_LINK_LIBRARIES(Overgrowth
-		    steam_api
-	    )
-	ENDIF()
-            
+        TARGET_LINK_LIBRARIES(
+            Overgrowth ${FRAMEWORKS}
+            # ${PLIBDIR}/Telemetry2SDKMac_20P3/lib/libTelemetryMacX86.link.a
+            ogg vorbis vorbisfile bz2)
+        IF(ENABLE_STEAMWORKS)
+            TARGET_LINK_LIBRARIES(Overgrowth steam_api)
+        ENDIF()
+
         SET_TARGET_PROPERTIES(Overgrowth PROPERTIES LINK_FLAGS "-F${LIBDIR}/libogg-1.3.3/include")
         SET_TARGET_PROPERTIES(Overgrowth PROPERTIES LINK_FLAGS "-F${LIBDIR}/libvorbis-1.3.6/include")
-        #SET_TARGET_PROPERTIES(Overgrowth PROPERTIES LINK_FLAGS "-F${CMAKE_SOURCE_DIR}/../MacInterfaces")
+        # SET_TARGET_PROPERTIES(Overgrowth PROPERTIES LINK_FLAGS "-F${CMAKE_SOURCE_DIR}/../MacInterfaces")
     ENDIF()
 ENDIF()
 
 IF(APPLE)
-    function(CreateBundleDir path)
-        add_custom_command( TARGET Overgrowth POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app${path}"
-        )
-    endfunction(CreateBundleDir)
+    FUNCTION(CreateBundleDir path)
+        ADD_CUSTOM_COMMAND(
+            TARGET Overgrowth
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app${path}")
+    ENDFUNCTION(CreateBundleDir)
 
-    function(CopyFileToBundle start_path end_path)
-        add_custom_command( TARGET Overgrowth POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "\"${start_path}\""
-                "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app/Contents/${end_path}\""
-        )
-    endfunction(CopyFileToBundle)
+    FUNCTION(CopyFileToBundle start_path end_path)
+        ADD_CUSTOM_COMMAND(
+            TARGET Overgrowth
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "\"${start_path}\""
+                    "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app/Contents/${end_path}\"")
+    ENDFUNCTION(CopyFileToBundle)
 
-    function(CopyFolderToBundle start_path end_path)
-        add_custom_command( TARGET Overgrowth POST_BUILD
-            COMMAND cp -af
-                "\"${start_path}\""
-                "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app/Contents/${end_path}\""
-        )
-    endfunction(CopyFolderToBundle)
+    FUNCTION(CopyFolderToBundle start_path end_path)
+        ADD_CUSTOM_COMMAND(
+            TARGET Overgrowth
+            POST_BUILD
+            COMMAND cp -af "\"${start_path}\"" "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app/Contents/${end_path}\"")
+    ENDFUNCTION(CopyFolderToBundle)
 
-    #add_custom_command( TARGET Overgrowth POST_BUILD
-    #    COMMAND rm -R "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app\""
-    #)
+    # ADD_CUSTOM_COMMAND(TARGET Overgrowth POST_BUILD COMMAND rm -R "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app\"" )
 
-    add_custom_command( TARGET Overgrowth POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove_directory
-            "$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app"
-    )
+    ADD_CUSTOM_COMMAND(
+        TARGET Overgrowth
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app")
 
     CreateBundleDir("")
     CreateBundleDir("/Contents")
@@ -1507,69 +1436,67 @@ IF(APPLE)
     CopyFileToBundle("${CMAKE_SOURCE_DIR}/steam_appid.txt" "MacOS/steam_appid.txt")
 
     IF(ENABLE_STEAMWORKS)
-        CopyFileToBundle("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/osx/libsteam_api.dylib" "MacOS/libsteam_api.dylib")
+        CopyFileToBundle("${PLIBDIR}/steamworks_1.51/sdk/redistributable_bin/osx/libsteam_api.dylib"
+                         "MacOS/libsteam_api.dylib")
     ENDIF()
 
-    #CopyFileToBundle("${PLIBDIR}/Telemetry2SDKMac_20P3/redist/libTelemetryMacX86.dylib" "MacOS/libTelemetryMacX86.dylib")
-        
+    # CopyFileToBundle("${PLIBDIR}/Telemetry2SDKMac_20P3/redist/libTelemetryMacX86.dylib"
+    # "MacOS/libTelemetryMacX86.dylib")
+
     CopyFileToBundle("${CMAKE_SOURCE_DIR}/steam_appid.txt" "Resources/steam_appid.txt")
     CopyFolderToBundle("${LIBDIR}/SDL2-2.0.20/SDL2.framework" "Frameworks/SDL2.framework")
     CopyFolderToBundle("${LIBDIR}/SDL2_net-2.0.1/SDL2_net.framework" "Frameworks/SDL2_net.framework")
 ENDIF()
 
-
-##POST BUILD PACKAGING
-
+# POST BUILD PACKAGING
 
 IF(DO_DIST_ARCHIVE)
-    SET(DIST_ARCHIVE "${CMAKE_BINARY_DIR}/Overgrowth.tar" CACHE STRING "Name of packaged file containing game binaries")
+    SET(DIST_ARCHIVE
+        "${CMAKE_BINARY_DIR}/Overgrowth.tar"
+        CACHE STRING "Name of packaged file containing game binaries")
     IF(LINUX)
-        ADD_CUSTOM_TARGET( GenerateDistArchive ALL 
+        ADD_CUSTOM_TARGET(
+            GenerateDistArchive ALL
             COMMAND "ln" "-s" "\"${LIB_ROOT}/\"" "${LIB_SUFFIX}"
-	    #Replace next command with this when renabling BREAKPAD support COMMAND "tar" "-chf" "\"${DIST_ARCHIVE}\"" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}.sym" "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}.sym" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}" "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" "${LIB_SUFFIX}"
-            COMMAND "tar" "-chf" "\"${DIST_ARCHIVE}\"" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}" "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" "${LIB_SUFFIX}"
+            # Replace next command with this when renabling BREAKPAD support
+            # COMMAND "tar" "-chf" "\"${DIST_ARCHIVE}\"" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}.sym"
+            # "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}.sym" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}"
+            # "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" "${LIB_SUFFIX}"
+            COMMAND "tar" "-chf" "\"${DIST_ARCHIVE}\"" "${OVERGROWTH_OUTPUT_NAME}${BIN_SUFFIX}"
+                    "${OVERGROWTH_WORKER_OUTPUT_NAME}${BIN_SUFFIX}" "${LIB_SUFFIX}"
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMAND "rm" "${LIB_SUFFIX}"
-        )
+            COMMAND "rm" "${LIB_SUFFIX}")
     ENDIF()
     IF(APPLE)
-        ADD_CUSTOM_TARGET( CreateDistArchive ALL 
+        ADD_CUSTOM_TARGET(
+            CreateDistArchive ALL
             COMMAND "mkdir" "-p" "Package"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        )
-        ADD_CUSTOM_TARGET( CopyDistArchive ALL 
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+        ADD_CUSTOM_TARGET(
+            CopyDistArchive ALL
             COMMAND "cp" "-av" "\"$<TARGET_FILE_DIR:Overgrowth>/Overgrowth.app\"" "Package/"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        )
-        ADD_DEPENDENCIES( CopyDistArchive
-            CreateDistArchive
-        )
-        ADD_CUSTOM_TARGET( GenerateDistArchive ALL 
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+        ADD_DEPENDENCIES(CopyDistArchive CreateDistArchive)
+        ADD_CUSTOM_TARGET(
+            GenerateDistArchive ALL
             COMMAND "tar" "-cvhf" "\"${DIST_ARCHIVE}\"" "Overgrowth.app"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Package"
-        )
-        ADD_DEPENDENCIES( GenerateDistArchive
-            CopyDistArchive
-        )
-        ADD_CUSTOM_TARGET( ClearDistArchive ALL 
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Package")
+        ADD_DEPENDENCIES(GenerateDistArchive CopyDistArchive)
+        ADD_CUSTOM_TARGET(
+            ClearDistArchive ALL
             COMMAND "rm" "-rf" "Package/Overgrowth.app"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        )
-        ADD_DEPENDENCIES( ClearDistArchive
-            GenerateDistArchive
-        )
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+        ADD_DEPENDENCIES(ClearDistArchive GenerateDistArchive)
     ENDIF()
     IF(WIN32)
-	    FIND_PROGRAM(SEVEN_ZIP NAMES 7z PATHS "C:/Program Files/7-Zip")
-        ADD_CUSTOM_TARGET( GenerateDistArchive ALL 
+        FIND_PROGRAM(
+            SEVEN_ZIP
+            NAMES 7z
+            PATHS "C:/Program Files/7-Zip")
+        ADD_CUSTOM_TARGET(
+            GenerateDistArchive ALL
             COMMAND ${SEVEN_ZIP} "a" "-ttar" "\"${DIST_ARCHIVE}\"" "./"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${WIN32_DIST_FOLDER}"
-        )
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${WIN32_DIST_FOLDER}")
     ENDIF()
-    ADD_DEPENDENCIES( GenerateDistArchive
-        Overgrowth
-        OvergrowthWorker
-    )
+    ADD_DEPENDENCIES(GenerateDistArchive Overgrowth OvergrowthWorker)
 ENDIF()
-
-# end of CMakeLists.txt ...

@@ -8,7 +8,6 @@ ENDIF()
 SET(SRCDIR "${CMAKE_SOURCE_DIR}/../Libraries/qslim-2.1/libgfx/")
 SET(LIBDIR "${CMAKE_SOURCE_DIR}/../Libraries")
 
-
 INCLUDE_DIRECTORIES(
     ${SRCDIR}/src
     ${SRCDIR}/include

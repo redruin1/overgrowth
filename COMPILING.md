@@ -67,3 +67,28 @@ The following command should install all necessary dependencies to build Overgro
 4. Run make to build the game ```$ make```
 5. Run the game by first moving to the project directory ```$ cd ..```
 6. Then start the game ```$ Build/Release/Overgrowth.x86_64```
+
+# Advanced
+
+## Specifying Release targets
+TODO
+
+## Building 32-bit executables on 64-bit machines
+This is sometimes useful for testing or distribution purposes.
+
+### Windows
+1. Proceed with steps 1-3 of above.
+2. Append the flag `-A Win32` to specify the target architecture; the command becomes `$ cmake ../Projects -DAUX_DATA="E:/SteamLibrary/steamapps/common/Overgrowth" -A Win32`
+
+Now when opening the solution it should say *Win32* at the top of the project.
+
+## MacOSX
+TODO
+
+## Linux
+First, you must ensure (in addition to a GCC compiler toolchain) that `gcc-multilib` and `g++-multilib` are also installed:
+
+* For Debian-like systems, this can be done with `$ sudo apt-get install gcc-multilib g++-multilib`
+* For Fedora-like systems, this can be done with `$ TODO`
+
+You'll also need to install the 32-bit versions of most of the Overgrowth dependencies.

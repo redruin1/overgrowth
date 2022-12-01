@@ -6,7 +6,7 @@ IF(WIN32)
 ENDIF()
 
 INCLUDE_DIRECTORIES(
-    ${SRCDIR}
+    ${SRCDIR} 
     ${LIBDIR}/zlib1.2.7/include
 )
 
@@ -20,10 +20,8 @@ SET(MINIZIP_SRCS
 
 IF(WIN32)
     SET(MINIZIP_SRCS 
-        ${MINIZIP_SRCS}
-        ${SRCDIR}/iowin32.c
+        ${MINIZIP_SRCS} ${SRCDIR}/iowin32.c
     )
 ENDIF()
 
 ADD_LIBRARY(minizip STATIC ${MINIZIP_SRCS})
-

@@ -5,9 +5,7 @@ INCLUDE_DIRECTORIES(
     ${LIBDIR}/murmurhash3
 )
 
-SET(MURMURHASH3_SRCS
-    ${LIBDIR}/murmurhash3/MurmurHash3.cpp
-)
+SET(MURMURHASH3_SRCS ${LIBDIR}/murmurhash3/MurmurHash3.cpp)
 
 ADD_LIBRARY(murmurhash3 STATIC ${MURMURHASH3_SRCS})
 

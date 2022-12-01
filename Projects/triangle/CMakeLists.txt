@@ -3,4 +3,3 @@ IF(WIN32)
 ENDIF()
 
 ADD_LIBRARY(triangle STATIC ${CMAKE_SOURCE_DIR}/../Source/Math/triangle.c)
-

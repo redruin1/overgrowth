@@ -1,0 +1,14 @@
+# YAML Formatting document in charge of managing CMakeLists throughout './Projects'.
+format:
+  line_width: 120
+  tab_size: 4
+  command_case: 'upper'
+  always_wrap: ['include_directories']
+  dangle_parens: true
+
+lint:
+  disabled_codes: [
+    "C0111", # "Missing docstring on function or macro declaration"
+    "C0113", # "Missing COMMENT in statement which allows it"
+  ]
+  function_pattern: '[a-zA-Z_0-9]' # Allow capital letters to valid function names
