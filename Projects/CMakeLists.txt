@@ -39,8 +39,8 @@ GIT_DESCRIBE(GIT_VERSION --always --tag)
 GIT_REV_LIST(GIT_REV_LIST --count HEAD) # Count what revision we're on
 SET(BUILD_ID "-1" CACHE STRING "Build ID value from automated build system")
 
-# Option to build with breakpad, removes some compiler warnings, so it's best to go without for normal development.
 # cmake-format: off
+# Option to build with breakpad, removes some compiler warnings, so it's best to go without for normal development.
 OPTION(BREAKPAD "Build with breakpad linked into the binary and with exception handling?" OFF)
 OPTION(
     DO_DIST_ARCHIVE
@@ -678,6 +678,7 @@ IF(APPLE)
     ENDIF()
 ENDIF()
 
+# TODO: Should this be wrapped in it's own CMakeList folder?
 SET(IMGUI_SRCS
     ${LIBDIR}/imgui-1.85/imgui.cpp
     ${LIBDIR}/imgui-1.85/imgui_demo.cpp
@@ -687,7 +688,8 @@ SET(IMGUI_SRCS
     ${LIBDIR}/imgui-1.85/imgui_color_picker.cpp
     ${LIBDIR}/imgui-1.85/implot.cpp
     ${LIBDIR}/imgui-1.85/implot_items.cpp
-    ${LIBDIR}/imgui-1.85/misc/freetype/imgui_freetype.cpp)
+    ${LIBDIR}/imgui-1.85/misc/freetype/imgui_freetype.cpp
+)
 
 ADD_LIBRARY(imgui STATIC ${IMGUI_SRCS})
 
@@ -695,6 +697,7 @@ TARGET_LINK_LIBRARIES(imgui PUBLIC freetype)
 
 SET_PROPERTY(TARGET imgui PROPERTY FOLDER "Support")
 
+# TODO: Should this be wrapped in it's own CMakeList folder?
 FILE(
     GLOB
     TINYXML_SRCS
@@ -703,12 +706,14 @@ FILE(
     ${LIBDIR}/tinyxml/tinyxmlerror.cpp
     ${LIBDIR}/tinyxml/tinyxmlparser.cpp
     ${LIBDIR}/tinyxml/tinystr.h
-    ${LIBDIR}/tinyxml/tinyxml.h)
+    ${LIBDIR}/tinyxml/tinyxml.h
+)
 
 ADD_LIBRARY(tinyxml STATIC ${TINYXML_SRCS})
 
 SET_PROPERTY(TARGET tinyxml PROPERTY FOLDER "Support")
 
+# TODO: Should this be wrapped in it's own CMakeList folder?
 FILE(GLOB TREX_SRCS ${LIBDIR}/trex/trex.cpp ${LIBDIR}/trex/trex.h)
 
 ADD_LIBRARY(trex STATIC ${TREX_SRCS})
