@@ -64,7 +64,11 @@ void ScriptableCampaign::Initialize(Path script_path, std::string _campaign_id) 
 
     as_context = new ASContext("scriptable_campaign", as_data);
 
-    as_context->RegisterGlobalFunction("void SendLevelMessage(const string& in msg)", asFUNCTION(ASSendLevelMessage), asCALL_CDECL);
+    as_context->RegisterGlobalFunction(
+        "void SendLevelMessage(const string& in msg)", 
+        asFUNCTION(ASSendLevelMessage), 
+        asCALL_CDECL, 
+        "Sends a control message to the currently loaded level.");
 
     AttachLevelSet(as_context);
     AttachLevelXML(as_context);
@@ -77,16 +81,43 @@ void ScriptableCampaign::Initialize(Path script_path, std::string _campaign_id) 
 
     AttachSaveFile(as_context, &Engine::Instance()->save_file_);
 
-    as_funcs.init = as_context->RegisterExpectedFunction("void Init()", false);
-    as_funcs.receive_message = as_context->RegisterExpectedFunction("void ReceiveMessage(string)", false);
-    as_funcs.set_window_dimensions = as_context->RegisterExpectedFunction("void SetWindowDimensions(int width, int height)", false);
+    as_funcs.init = as_context->RegisterExpectedFunction(
+        "void Init()", 
+        false, 
+        "Initializes the campaign.");
+    as_funcs.receive_message = as_context->RegisterExpectedFunction(
+        "void ReceiveMessage(string)", 
+        false, 
+        "Recieves a Campaign message and handles it.");
+    as_funcs.set_window_dimensions = as_context->RegisterExpectedFunction(
+        "void SetWindowDimensions(int width, int height)", 
+        false,
+        "Callback for when the display window is resized.");
 
-    as_funcs.update = as_context->RegisterExpectedFunction("void Update()", true);
-    as_funcs.dispose = as_context->RegisterExpectedFunction("void Dispose()", true);
-    as_funcs.enter_campaign = as_context->RegisterExpectedFunction("void EnterCampaign()", true);
-    as_funcs.enter_level = as_context->RegisterExpectedFunction("void EnterLevel()", true);
-    as_funcs.leave_campaign = as_context->RegisterExpectedFunction("void LeaveCampaign()", true);
-    as_funcs.leave_level = as_context->RegisterExpectedFunction("void LeaveLevel()", true);
+    as_funcs.update = as_context->RegisterExpectedFunction(
+        "void Update()", 
+        true,
+        "TODO");
+    as_funcs.dispose = as_context->RegisterExpectedFunction(
+        "void Dispose()", 
+        true,
+        "TODO");
+    as_funcs.enter_campaign = as_context->RegisterExpectedFunction(
+        "void EnterCampaign()", 
+        true,
+        "TODO");
+    as_funcs.enter_level = as_context->RegisterExpectedFunction(
+        "void EnterLevel()", 
+        true,
+        "TODO");
+    as_funcs.leave_campaign = as_context->RegisterExpectedFunction(
+        "void LeaveCampaign()", 
+        true,
+        "TODO");
+    as_funcs.leave_level = as_context->RegisterExpectedFunction(
+        "void LeaveLevel()", 
+        true,
+        "TODO");
 
     char path[kPathSize];
     FormatString(path, kPathSize, "%sasscriptable_campaign_docs.h", GetWritePath(CoreGameModID).c_str());

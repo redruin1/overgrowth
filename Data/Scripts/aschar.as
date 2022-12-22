@@ -14835,7 +14835,7 @@ void FinalAnimationMatrixUpdate(int num_frames) {
         }
 
         LeaveTelemetryZone();
-        LeaveTelemetryZone();
+        LeaveTelemetryZone(); // "ragdoll transition blend"
     }
 
     if(_debug_draw_bones) {
@@ -14851,7 +14851,7 @@ void FinalAnimationMatrixUpdate(int num_frames) {
     UpdateEyeLook();
     LeaveTelemetryZone();
 
-    LeaveTelemetryZone();
+    LeaveTelemetryZone(); // "inverse kinematics"
 }
 
 void DoChestIK(float chest_tilt_offset, float angle_threshold, float torso_damping, float torso_stiffness, int num_frames) {

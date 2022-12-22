@@ -47,6 +47,7 @@ typedef int32_t ASFunctionHandle;
 
 struct ASExpectedFunction {
     std::string definition;
+    std::string documentation;
     asIScriptFunction* func_ptr;
     bool mandatory;
     bool unloaded;
@@ -84,7 +85,7 @@ class ASContext {
 
    public:
     bool LoadExpectedFunctions();
-    ASFunctionHandle RegisterExpectedFunction(const std::string& function_decl, bool mandatory);
+    ASFunctionHandle RegisterExpectedFunction(const std::string& function_decl, bool mandatory, const std::string& function_docs = "");
     Path current_script;
 
     ASContext(const char* name, const ASData& as_data);
@@ -101,38 +102,39 @@ class ASContext {
 
     void RegisterEnum(const char* declaration);
     void RegisterEnumValue(const char* enum_declaration, const char* enum_val_string, int enum_val);
-    void RegisterGlobalFunction(const char* declaration,
+    void RegisterGlobalFunction(const std::string& declaration,
                                 const asSFuncPtr& funcPointer,
                                 asDWORD callconv,
-                                const char* comment = NULL);
-    void RegisterGlobalFunctionThis(const char* declaration,
+                                const std::string& docstring = "");
+    void RegisterGlobalFunctionThis(const std::string& declaration,
                                     const asSFuncPtr& funcPointer,
                                     asDWORD callconv,
                                     void* ptr,
-                                    const char* comment = NULL);
-    void RegisterGlobalProperty(const char* declaration,
+                                    const std::string& docstring = "");
+    void RegisterGlobalProperty(const std::string& declaration,
                                 void* pointer,
-                                const char* comment = NULL);
-    void RegisterObjectType(const char* obj,
+                                const std::string& docstring = "");
+    void RegisterObjectType(const std::string& obj,
                             int byteSize,
                             asDWORD flags,
-                            const char* comment = NULL);
-    void RegisterFuncdef(const char* declaration, const char* comment = NULL);
-    void RegisterObjectMethod(const char* obj,
-                              const char* declaration,
+                            const std::string& docstring = "");
+    void RegisterFuncdef(const std::string& declaration, 
+                         const std::string& docstring = "");
+    void RegisterObjectMethod(const std::string& obj,
+                              const std::string& declaration,
                               const asSFuncPtr& funcPointer,
                               asDWORD callConv,
-                              const char* comment = NULL);
-    void RegisterObjectProperty(const char* obj,
-                                const char* declaration,
+                              const std::string& docstring = "");
+    void RegisterObjectProperty(const std::string& obj,
+                                const std::string& declaration,
                                 int byteOffset,
-                                const char* comment = NULL);
-    void RegisterObjectBehaviour(const char* obj,
+                                const std::string& docstring = "");
+    void RegisterObjectBehaviour(const std::string& obj,
                                  asEBehaviours behaviour,
-                                 const char* declaration,
+                                 const std::string& declaration,
                                  const asSFuncPtr& funcPointer,
                                  asDWORD callConv,
-                                 const char* comment = NULL);
+                                 const std::string& docstring = "");
     void ResetGlobals();
     void Recompile();
     void PrintGlobalVars();

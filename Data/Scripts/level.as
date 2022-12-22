@@ -22,33 +22,45 @@
 //
 //-----------------------------------------------------------------------------
 
+/**
+    Global level script. Handles level messages, dialogue sequences, GUI control, and pause menu logic. Only one of 
+    these scripts is ever active at a time, either as this file, an entire replacement by a mod, or a partial 
+    modification. For more info on level scripts, read here:
+
+    https://wiki.wolfire.com/index.php/LevelScripts
+*/
+
 #include "dialogue.as"
 #include "menu_common.as"
 #include "settings.as"
-int controller_id = 0;
-bool has_gui = false;
-bool toggle_gui = false;
-bool draw_settings = false;
-bool has_display_text = false;
-string display_text = "";
-uint32 display_text_id;
-string hotspot_image_string;
-bool menu_paused = false;
-bool allow_retry = true;
-bool non_tutorial_message = false;
-string tutorial_message = "";
-string tutorial_message_display = "";
-float tutorial_opac = 0.0;
-float reset_time = -999.0f;
 
-array<string> dialogue_queue;
 
-Dialogue dialogue;
-IMGUI@ imGUI;
+const float _max_anim_frames_per_second = 100.0f;
+
+int controller_id = 0;                  // ID of the current controller used in this level
+bool has_gui = false;                   // Whether or not the GUI is currently rendered
+bool toggle_gui = false;                // Whether the GUI will be toggled this frame
+bool draw_settings = false;             // Whether or not the settings submenu is currently drawn
+bool has_display_text = false;          // Whether or not display text is currently being shown
+string display_text = "";               // The actual text to display
+uint32 display_text_id;                     // Unused
+string hotspot_image_string;            // The path to a background image to use for the HUD
+bool menu_paused = false;               // Whether or not the pause menu is shown
+bool allow_retry = true;                // Whether or not the level can be reset by the player
+bool non_tutorial_message = false;      // Whether or not the current message is a non-tutorial message or not
+string tutorial_message = "";           // Contents of the tutorial message
+string tutorial_message_display = "";       // TODO
+float tutorial_opac = 0.0;              // Opacity of the tutorial message
+float reset_time = -999.0f;             // The last time the level was reset (-999 if never reset)
+bool capture_input = false;             // Whether or not the users input is currently captured
+
+array<string> dialogue_queue;           // Current lines of dialogue to go through
+
+Dialogue dialogue;                      // Level dialogue object
+IMGUI@ imGUI;                           // IMGUI handle
 
 string font_path = "Data/Fonts/Lato-Regular.ttf";
 string name_font_path = "Data/Fonts/edosz.ttf";
-
 
 
 class DialogueTextCanvas {
@@ -59,14 +71,29 @@ class DialogueTextCanvas {
 
 array<DialogueTextCanvas> dialogue_text_canvases;
 
+float fade_out_start;                   // Dialogue box fade out start time
+float fade_out_end = -1.0f;             // Dialogue box fade out end time
+float fade_in_start;                    // Dialogue box fade in start time
+float fade_in_end = -1.0f;              // Dialogue box fade in end time
+
+
+/**
+    Saves the players position in the dialogue tree(s) when saving the level.
+*/
 void SaveHistoryState(SavedChunk@ chunk) {
     dialogue.SaveHistoryState(chunk);
 }
 
+/**
+    Reads the players position in the dialogue tree(s) when loading the level.
+*/
 void ReadChunk(SavedChunk@ chunk) {
     dialogue.ReadChunk(chunk);
 }
 
+/**
+    Draws a dialogue box.
+*/
 void DrawDialogueTextCanvas(int obj_id){
     Object @obj = ReadObjectFromID(obj_id);
     ScriptParams@ params = obj.GetScriptParams();
@@ -111,20 +138,33 @@ void DrawDialogueTextCanvas(int obj_id){
     text.DebugDrawBillboard(obj.GetTranslation(), obj.GetScale().x, _delete_on_update);
 }
 
+/**
+    Called on level load/setup. Initializes a GUI for any menu elements and loads the dialogue if the level contains 
+    any.
+*/
 void Init(string p_level_name) {
     @imGUI = CreateIMGUI();
     dialogue.Init();
     imGUI.setup();
 }
 
+/**
+    Determines if the player has camera control. TODO(?) 
+*/
 int HasCameraControl() {
     return (dialogue.HasCameraControl() || menu_paused)?1:0;
 }
 
+/**
+    Returns whether or not this level has focus. TODO(?)
+*/
 bool HasFocus(){
     return has_gui;
 }
 
+/**
+    Forces all characters in the level to become aware of every other character in the level.
+*/
 void CharactersNoticeEachOther() {
     int num_chars = GetNumCharacters();
     for(int i=0; i<num_chars; ++i){
@@ -133,21 +173,42 @@ void CharactersNoticeEachOther() {
      }
 }
 
+/**
+    Get the rounded y-rotation of the camera for the current line of dialogue in the current level.
+*/
 int GetDialogueCamRotY(){
     return int(dialogue.cam_rot.y+0.5);
 }
 
-float fade_out_start;
-float fade_out_end = -1.0f;
-
-float fade_in_start;
-float fade_in_end = -1.0f;
-
-
+/**
+    Handles message events passed to the level. Any messages that are not recognized by the level and do not start with 
+    `"menu_player"`are treated as settings changes; everything else is passed along to the dialogue object. 
+    
+    Valid Level messages are:
+    * "cleartext" - Wipes all current displayed text
+    * "dispose_level" - TODO
+    * "disable_retry" - Enables permadeath
+    * "go_to_main_menu" - Returns to the previous menu if online, and the main menu if not
+    * "clearhud" - Clears any current HUD elements on screen
+    * "manual_reset" - Sends a "reset" event to the level, equivalent to pressing `L` with debug keys enabled
+    * "reset" - Resets the level
+    * "display_text [text]" - Displays the message sent alongside the event
+    * "tutorial [text]" - Displays a tutorial prompt
+    * "screen_message [text]" - Displays text identically to "tutorial", but distinct from "tutorial"
+    * "displaygui" - Deprecated
+    * "displayhud [hotspot_image]" - Shows HUD image based on the hotspot pointed to by [hotspot_image]
+    * "loadlevel [levelpath]" - Loads a (usually different) level
+    * "make_all_aware" - Iterates over every character and makes them omniscient
+    * "start_dialogue" - Starts a dialogue sequence
+    * "start_dialogue_fade" - Starts the fade in/out animation for dialogue sequences
+    * "open_menu" - Opens the pause menu
+    * "make_selected_character_saved_corpse" - TODO
+    * "revive_selected_character_and_unsave_corpse" - TODO
+*/
 void ReceiveMessage(string msg) {
     TokenIterator token_iter;
     token_iter.Init();
-    if(!token_iter.FindNextToken(msg)){
+    if(!token_iter.FindNextToken(msg)){ // if the msg string is empty
         return;
     }
     string token = token_iter.GetToken(msg);
@@ -280,6 +341,9 @@ void ReceiveMessage(string msg) {
     }
 }
 
+/**
+    Draw level pass 1(?)
+*/
 void DrawGUI() {
     EnterTelemetryZone("level.as DrawGUI()");
     if(hotspot_image_string.length() != 0){
@@ -293,7 +357,9 @@ void DrawGUI() {
     LeaveTelemetryZone();
 }
 
-
+/**
+    Breaks a tutorial/display message over multiple lines into a proper display format.
+*/
 void AnalyzeForLineBreaks(string &in input, string &out output, int space){
     int font_size = dialogue.GetFontSize();
     TextMetrics metrics = GetTextAtlasMetrics(font_path, font_size, 0, input);
@@ -316,6 +382,9 @@ void AnalyzeForLineBreaks(string &in input, string &out output, int space){
     output = final.substr(0, final.length()-1);
 }
 
+/**
+    Draw level pass 2(?)
+*/
 void DrawGUI2() {
     EnterTelemetryZone("dialogue.Display2()");
     dialogue.Display2();
@@ -384,6 +453,9 @@ void DrawGUI2() {
     }
 }
 
+/**
+    Draw level pass 3(?)
+*/
 void DrawGUI3() {
     if(has_gui){
         EnterTelemetryZone("imGUI.render()");
@@ -392,8 +464,12 @@ void DrawGUI3() {
     }
 }
 
-
-bool capture_input = false;
+/**
+    Called regularly by the engine. Handles the pause menu logic and events. 
+    
+    Has an alternative signature `void Update()`, but this function is deprecated and should not be used normally, in 
+    favor of this function.
+*/
 void Update(int paused) {
     const bool kDialogueQueueDebug = false;
     if(kDialogueQueueDebug){
@@ -426,7 +502,7 @@ void Update(int paused) {
         }
     }
 
-    // process any messages produced from the update
+    // Process any messages produced from the update
     while( imGUI.getMessageQueueSize() > 0 ) {
         IMMessage@ message = imGUI.getNextMessage();
         if( message.name == "" ){return;}
@@ -496,17 +572,24 @@ void Update(int paused) {
         }
     }
 
-    if( non_tutorial_message == false && tutorial_message.length() > 0 && GetConfigValueBool("tutorials") == false ) {
+    if( non_tutorial_message == false 
+        && tutorial_message.length() > 0 
+        && GetConfigValueBool("tutorials") == false ) 
+    {
         level.SendMessage("tutorial");
     }
 
     if(paused == 0){
-        if(DebugKeysEnabled() && !GetInputDown(controller_id, "lctrl") && GetInputPressed(controller_id, "l") && !dialogue.show_editor_info){
+        if( DebugKeysEnabled() 
+            && !GetInputDown(controller_id, "lctrl") 
+            && GetInputPressed(controller_id, "l") 
+            && !dialogue.show_editor_info) 
+        {
             Log(info,"Reset key pressed");
             level.SendMessage("manual_reset");
         }
 
-        if(DebugKeysEnabled() && GetInputDown(controller_id, "x")){
+        if( DebugKeysEnabled() && GetInputDown(controller_id, "x") ){
             int num_items = GetNumItems();
             for(int i=0; i<num_items; i++){
                 ItemObject@ item_obj = ReadItem(i);
@@ -528,8 +611,9 @@ void Update(int paused) {
     }
 }
 
-const float _max_anim_frames_per_second = 100.0f;
-
+/**
+    Sets the animation update frequencies. (TODO)
+*/
 void SetAnimUpdateFreqs() {
     int num = GetNumCharacters();
     array<float> framerate_request(num);
@@ -579,6 +663,10 @@ void SetAnimUpdateFreqs() {
     }
 }
 
+/**
+    Gets the first integer ID of a character currently controlled by the player. Returns `-1` if no character is currently
+    player-controlled. 
+*/
 int GetPlayerCharacterID() {
     int num = GetNumCharacters();
     for(int i=0; i<num; ++i){
@@ -590,6 +678,10 @@ int GetPlayerCharacterID() {
     return -1;
 }
 
+/**
+    Gets an `array<int>` of character ID's that are currently player-controlled. Returns an empty array if there are no
+    player-controlled characters.
+*/
 array<int> GetControlledCharacterIDs() {
     array<int> ids;
     int num = GetNumCharacters();
@@ -602,15 +694,25 @@ array<int> GetControlledCharacterIDs() {
     return ids;
 }
 
+/**
+    Handles when an object enters a hotspot.
+*/
 void HotspotEnter(string str, MovementObject @mo) {
     if(str == "Stop"){
         level.SendMessage("reset");
     }
 }
 
+/**
+    Handles when an object exits a hotspot.
+*/
 void HotspotExit(string str, MovementObject @mo) {
+    // stub
 }
 
+/**
+    Iterates over all spawn points and sorts them into arena spawns. (Deprecated?)
+*/
 JSON getArenaSpawns() {
     JSON testValue;
 
@@ -648,6 +750,9 @@ JSON getArenaSpawns() {
 
 }
 
+/**
+    Updates the GUIs when the window dimensions are reset.
+*/
 void SetWindowDimensions(int w, int h)
 {
     dialogue.ResizeUpdate(w,h);
@@ -656,6 +761,9 @@ void SetWindowDimensions(int w, int h)
     imGUI.receiveMessage( IMMessage("Settings_refresh") );
 }
 
+/**
+    Adds a new player to the multiplayer player list.
+*/
 void AddPlayerListEntry(IMDivider@ parent, PlayerState player) {
     int width = 600;
     int height = 40;
@@ -690,6 +798,9 @@ void AddPlayerListEntry(IMDivider@ parent, PlayerState player) {
     parent.append(player_container);
 }
 
+/**
+    Creates the in-game pause menu.
+*/
 void AddPauseMenu(){
     float background_height = 1200;
     float background_width = 800;
@@ -717,7 +828,12 @@ void AddPauseMenu(){
     menu_background.scaleToSizeX(450);
     menu_background.setZOrdering(0);
     menu_background.setColor(vec4(0,0,0,0.85f));
-    background_container.addFloatingElement(menu_background, "menu_background", vec2(middle_x - menu_background.getSizeX() / 2.0f, middle_y - menu_background.getSizeY() / 2.0f), 0);
+    background_container.addFloatingElement(
+        menu_background, 
+        "menu_background", 
+        vec2(middle_x - menu_background.getSizeX() / 2.0f, middle_y - menu_background.getSizeY() / 2.0f), 
+        0
+    );
 
     IMDivider mainDiv( "mainDiv", DOHorizontal );
     background_container.setElement(mainDiv);
@@ -846,6 +962,9 @@ void AddPauseMenu(){
     controller_wraparound = true;
 }
 
+/**
+    Returns whether or not the current dialogue restricts the user's camera control. 
+*/
 bool DialogueCameraControl() {
     return dialogue.has_cam_control;
 }

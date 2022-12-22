@@ -161,30 +161,105 @@ bool Hotspot::Initialize() {
 
         as_context->RegisterGlobalProperty("Hotspot hotspot", this);
 
-        as_funcs.init = as_context->RegisterExpectedFunction("void Init()", false);
-        as_funcs.set_parameters = as_context->RegisterExpectedFunction("void SetParameters()", false);
-        as_funcs.receive_message = as_context->RegisterExpectedFunction("void ReceiveMessage(string)", false);
-        as_funcs.update = as_context->RegisterExpectedFunction("void Update()", false);
-        as_funcs.pre_draw = as_context->RegisterExpectedFunction("void PreDraw(float curr_game_time)", false);
-        as_funcs.draw = as_context->RegisterExpectedFunction("void Draw()", false);
-        as_funcs.draw_editor = as_context->RegisterExpectedFunction("void DrawEditor()", false);
-        as_funcs.reset = as_context->RegisterExpectedFunction("void Reset()", false);
-        as_funcs.set_enabled = as_context->RegisterExpectedFunction("void SetEnabled(bool val)", false);
-        as_funcs.handle_event = as_context->RegisterExpectedFunction("void HandleEvent(string event, MovementObject @mo)", false);
-        as_funcs.handle_event_item = as_context->RegisterExpectedFunction("void HandleEventItem(string event, ItemObject @obj)", false);
-        as_funcs.get_type_string = as_context->RegisterExpectedFunction("string GetTypeString()", false);
-        as_funcs.dispose = as_context->RegisterExpectedFunction("void Dispose()", false);
-        as_funcs.pre_script_reload = as_context->RegisterExpectedFunction("void PreScriptReload()", false);
-        as_funcs.post_script_reload = as_context->RegisterExpectedFunction("void PostScriptReload()", false);
-        as_funcs.connect_to = as_context->RegisterExpectedFunction("bool ConnectTo(Object @other)", false);
-        as_funcs.disconnect = as_context->RegisterExpectedFunction("bool Disconnect(Object @other)", false);
-        as_funcs.connected_from = as_context->RegisterExpectedFunction("void ConnectedFrom(Object @other)", false);
-        as_funcs.disconnected_from = as_context->RegisterExpectedFunction("void DisconnectedFrom(Object @other)", false);
-        as_funcs.accept_connections_from = as_context->RegisterExpectedFunction("bool AcceptConnectionsFrom(ConnectionType type)", false);
-        as_funcs.accept_connections_from_obj = as_context->RegisterExpectedFunction("bool AcceptConnectionsFrom(Object @other)", false);
-        as_funcs.accept_connections_to_obj = as_context->RegisterExpectedFunction("bool AcceptConnectionsTo(Object @other)", false);
-        as_funcs.launch_custom_gui = as_context->RegisterExpectedFunction("void LaunchCustomGUI()", false);
-        as_funcs.object_inspector_read_only = as_context->RegisterExpectedFunction("bool ObjectInspectorReadOnly()", false);
+        as_funcs.init = as_context->RegisterExpectedFunction(
+            "void Init()", 
+            false,
+            "Called when the hotspot is first loaded, either upon level load or undo/redo in the editor.");
+        as_funcs.set_parameters = as_context->RegisterExpectedFunction(
+            "void SetParameters()", 
+            false,
+            "Called when the hotspot is first loaded and anytime else script parameters are changed.");
+        as_funcs.receive_message = as_context->RegisterExpectedFunction(
+            "void ReceiveMessage(string message)", 
+            false,
+            "Called when a message has been sent to this hotspot, so the hotspot can handle control signals.");
+        as_funcs.update = as_context->RegisterExpectedFunction(
+            "void Update()", 
+            false,
+            "Called regularly by the engine so you can perform work.");
+        as_funcs.pre_draw = as_context->RegisterExpectedFunction(
+            "void PreDraw(float curr_game_time)", 
+            false,
+            "Serves as a before-update function for script-defined drawing. Gets called once per frame.");
+        as_funcs.draw = as_context->RegisterExpectedFunction(
+            "void Draw()", 
+            false,
+            "Custom hotspot drawing callback. Used if your hotspot has associated visual elements.");
+        as_funcs.draw_editor = as_context->RegisterExpectedFunction(
+            "void DrawEditor()", 
+            false,
+            "Additional drawing call that is only performed while in the editor. Typically used to draw bounding "
+            "volumes around invisible hotspots.");
+        as_funcs.reset = as_context->RegisterExpectedFunction(
+            "void Reset()", 
+            false,
+            "Callback called when the level is reset.");
+        as_funcs.set_enabled = as_context->RegisterExpectedFunction(
+            "void SetEnabled(bool is_enabled)", 
+            false,
+            "Sets whether or not this hotspot is enabled. Allows the user to enable/disable certain functionality as "
+            "desired.");
+        as_funcs.handle_event = as_context->RegisterExpectedFunction(
+            "void HandleEvent(string event, MovementObject @mo)", 
+            false,
+            "Called when a MovementObject interacts with the hotspot's volume, for custom behavior.");
+        as_funcs.handle_event_item = as_context->RegisterExpectedFunction(
+            "void HandleEventItem(string event, ItemObject @obj)", 
+            false,
+            "Called when an Item object interacts with the hotspot's volume, for custom behavior.");
+        as_funcs.get_type_string = as_context->RegisterExpectedFunction(
+            "string GetTypeString()", 
+            false,
+            "Allows the user to specify a custom string ID for a particular hotspot, to aid in hotspot filtering.");
+        as_funcs.dispose = as_context->RegisterExpectedFunction(
+            "void Dispose()", 
+            false,
+            "Called when a hotspot is about to be deleted, either from the editor or on level unload. Do not delete "
+            "the hotspot in this function, instead use it to unload any other resources attached to the hotspot.");
+        as_funcs.pre_script_reload = as_context->RegisterExpectedFunction(
+            "void PreScriptReload()", 
+            false,
+            "Function called before reloading the level script.");
+        as_funcs.post_script_reload = as_context->RegisterExpectedFunction(
+            "void PostScriptReload()", 
+            false,
+            "Function called after reloading the level script.");
+        as_funcs.connect_to = as_context->RegisterExpectedFunction(
+            "bool ConnectTo(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.disconnect = as_context->RegisterExpectedFunction(
+            "bool Disconnect(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.connected_from = as_context->RegisterExpectedFunction(
+            "void ConnectedFrom(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.disconnected_from = as_context->RegisterExpectedFunction(
+            "void DisconnectedFrom(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.accept_connections_from = as_context->RegisterExpectedFunction(
+            "bool AcceptConnectionsFrom(ConnectionType type)", 
+            false,
+            "TODO");
+        as_funcs.accept_connections_from_obj = as_context->RegisterExpectedFunction(
+            "bool AcceptConnectionsFrom(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.accept_connections_to_obj = as_context->RegisterExpectedFunction(
+            "bool AcceptConnectionsTo(Object @other)", 
+            false,
+            "TODO");
+        as_funcs.launch_custom_gui = as_context->RegisterExpectedFunction(
+            "void LaunchCustomGUI()", 
+            false,
+            "TODO");
+        as_funcs.object_inspector_read_only = as_context->RegisterExpectedFunction(
+            "bool ObjectInspectorReadOnly()", 
+            false,
+            "TODO");
 
         PROFILER_ENTER(g_profiler_ctx, "Exporting docs");
         char path[kPathSize];

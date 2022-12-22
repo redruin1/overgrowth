@@ -84,17 +84,44 @@ void ScriptableUI::Initialize(const Path& script_path, const ASData& as_data, bo
 
     AttachSaveFile(as_context, &Engine::Instance()->save_file_);
 
-    as_funcs.initialize = as_context->RegisterExpectedFunction("void Initialize()", true);
-    as_funcs.can_go_back = as_context->RegisterExpectedFunction("bool CanGoBack()", true);
-    as_funcs.dispose = as_context->RegisterExpectedFunction("void Dispose()", true);
-    as_funcs.draw_gui = as_context->RegisterExpectedFunction("void DrawGUI()", true);
-    as_funcs.update = as_context->RegisterExpectedFunction("void Update()", true);
+    as_funcs.initialize = as_context->RegisterExpectedFunction(
+        "void Initialize()",
+        true,
+        "TODO");
+    as_funcs.can_go_back = as_context->RegisterExpectedFunction(
+        "bool CanGoBack()",
+        true,
+        "TODO");
+    as_funcs.dispose = as_context->RegisterExpectedFunction(
+        "void Dispose()",
+        true,
+        "TODO");
+    as_funcs.draw_gui = as_context->RegisterExpectedFunction(
+        "void DrawGUI()",
+        true,
+        "TODO");
+    as_funcs.update = as_context->RegisterExpectedFunction(
+        "void Update()", 
+        true,
+        "TODO");
 
-    as_funcs.mod_activation_reload = as_context->RegisterExpectedFunction("void ModActivationReload()", false);
-    as_funcs.resize = as_context->RegisterExpectedFunction("void Resize()", false);
-    as_funcs.script_reloaded = as_context->RegisterExpectedFunction("void ScriptReloaded()", false);
+    as_funcs.mod_activation_reload = as_context->RegisterExpectedFunction(
+        "void ModActivationReload()", 
+        false,
+        "TODO");
+    as_funcs.resize = as_context->RegisterExpectedFunction(
+        "void Resize()", 
+        false,
+        "TODO");
+    as_funcs.script_reloaded = as_context->RegisterExpectedFunction(
+        "void ScriptReloaded()", 
+        false,
+        "TODO");
 
-    as_funcs.queue_basic_popup = as_context->RegisterExpectedFunction("void QueueBasicPopup(string title, string body)", false);
+    as_funcs.queue_basic_popup = as_context->RegisterExpectedFunction(
+        "void QueueBasicPopup(string title, string body)", 
+        false,
+        "TODO");
 
     // Get screen dimensions so we can detect when things change
     currentWindowDims[0] = Graphics::Instance()->window_dims[0];

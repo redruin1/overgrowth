@@ -385,7 +385,10 @@ void AnimationClient::UpdateLayers(float timestep) {
 void AnimationClient::SetASContext(ASContext *_as_context) {
     as_context = _as_context;
 
-    as_funcs.layer_removed = as_context->RegisterExpectedFunction("void LayerRemoved(int id)", true);
+    as_funcs.layer_removed = as_context->RegisterExpectedFunction(
+        "void LayerRemoved(int id)", 
+        true,
+        "TODO");
 
     as_context->LoadExpectedFunctions();
 }

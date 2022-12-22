@@ -2655,11 +2655,32 @@ vec3 RiggedObject::GetIKTargetAnimPosition(const std::string& target_name) {
 void RiggedObject::SetASContext(ASContext* _as_context) {
     as_context = _as_context;
 
-    as_funcs.handle_animation_event = as_context->RegisterExpectedFunction("void HandleAnimationEvent(string,vec3)", true);
-    as_funcs.display_matrix_update = as_context->RegisterExpectedFunction("void DisplayMatrixUpdate()", true);
-    as_funcs.final_animation_matrix_update = as_context->RegisterExpectedFunction("void FinalAnimationMatrixUpdate(int)", true);
-    as_funcs.final_attached_item_update = as_context->RegisterExpectedFunction("void FinalAttachedItemUpdate(int)", true);
-    as_funcs.notify_item_detach = as_context->RegisterExpectedFunction("void NotifyItemDetach(int)", true);
+    as_funcs.handle_animation_event = as_context->RegisterExpectedFunction(
+        "void HandleAnimationEvent(string event, vec3 world_pos)", 
+        true,
+        "Callback for when an animation keyframe completes, for custom behavior on certain animation keys.");
+    as_funcs.display_matrix_update = as_context->RegisterExpectedFunction(
+        "void DisplayMatrixUpdate()", 
+        true,
+        "Used for fully procedural animations independent of keyframe animations (such as breathing).");
+    as_funcs.final_animation_matrix_update = as_context->RegisterExpectedFunction(
+        "void FinalAnimationMatrixUpdate(int num_frames)", 
+        true,
+        "Callback to do character Inverse Kinematics calculations, such as final foot placements, ledge grabs, eye "
+        "look directions, etc.");
+    as_funcs.final_attached_item_update = as_context->RegisterExpectedFunction(
+        "void FinalAttachedItemUpdate(int)", 
+        true,
+        "Callback to do weapon Inverse Kinematics calculations (I think). (TODO)");
+    // This is duplicate to the one found in movement object; is this function supposed to be on the rigged object level,
+    // or the movement object level?
+    // I've commented this one of the two out for now
+    /*
+    as_funcs.notify_item_detach = as_context->RegisterExpectedFunction(
+        "void NotifyItemDetach(int item_id)", 
+        true,
+        "Duplicate");
+    */
 
     as_context->LoadExpectedFunctions();
 

@@ -4113,8 +4113,12 @@ static void UpdateShadowCascades(SceneGraph* scenegraph) {
         {  // Perform per-frame, per-camera functions, like character LOD and spawning grass
             PROFILER_GPU_ZONE(g_profiler_ctx, "Pre-draw camera");
             float predraw_time = game_timer.GetRenderTime();
-            for (int i = 0; i < scenegraph->objects_.size(); i++) {
-                auto obj = scenegraph->objects_[i];
+            // This loop also seems to need to be a regular for loop in order to prevent exceptions.
+            // However, a more elegant solution would probably be to ensure that scenegraph->objects_ does not change 
+            // while we iterate over it, which may be hard to guarantee. Alternatively, we could simply make a copy of
+            // the vector and iterate over that temporary, though that's probably worse than a regular integer loop.
+            for (unsigned int i = 0; i < scenegraph->objects_.size(); i++) {
+                Object* obj = scenegraph->objects_[i];
                 if (!obj->parent) {
                     obj->PreDrawCamera(predraw_time);
                 }

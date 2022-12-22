@@ -105,8 +105,14 @@ bool CameraObject::Initialize() {
     as_context->DocsCloseBrace();
     as_context->RegisterGlobalProperty("CameraObject co", this);
 
-    as_funcs.init = as_context->RegisterExpectedFunction("void Init()", true);
-    as_funcs.frame_selection = as_context->RegisterExpectedFunction("void FrameSelection(bool)", true);
+    as_funcs.init = as_context->RegisterExpectedFunction(
+        "void Init()", 
+        true,
+        "Called when the camera is first loaded, upon level load.");
+    as_funcs.frame_selection = as_context->RegisterExpectedFunction(
+        "void FrameSelection(bool increased_distance)", 
+        true,
+        "Called when the 'frame selection' action is performed in the editor. (TODO explain `increased_distance`)");
 
     PROFILER_ENTER(g_profiler_ctx, "Exporting docs");
     char path[kPathSize];

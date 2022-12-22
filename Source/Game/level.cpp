@@ -218,29 +218,90 @@ void Level::Initialize(SceneGraph* scenegraph, GUI* gui) {
         character_script_getter_.AttachToScript(ctx, "character_getter");
         as_collisions->AttachToContext(ctx);
 
-        as_context.as_funcs.init = ctx->RegisterExpectedFunction("void Init(string level_name)", true);
-        as_context.as_funcs.update = ctx->RegisterExpectedFunction("void Update(int is_paused)", false);
-        as_context.as_funcs.update_deprecated = ctx->RegisterExpectedFunction("void Update()", false);
+        as_context.as_funcs.init = ctx->RegisterExpectedFunction(
+            "void Init(string level_name)",
+            true,
+            "Level initialization function. All initial setup is performed here.");
+        as_context.as_funcs.update = ctx->RegisterExpectedFunction(
+            "void Update(int is_paused)", 
+            false,
+            "Level update function, called once every game tick.");
+        as_context.as_funcs.update_deprecated = ctx->RegisterExpectedFunction(
+            "void Update()", 
+            false,
+            "Level update fallback function; will be used only if the above update signature is not found. Avoid using "
+            "this one, if possible.");
 
-        as_context.as_funcs.hotspot_exit = ctx->RegisterExpectedFunction("void HotspotExit(string event, MovementObject @mo)", false);
-        as_context.as_funcs.hotspot_enter = ctx->RegisterExpectedFunction("void HotspotEnter(string event, MovementObject @mo)", false);
-        as_context.as_funcs.receive_message = ctx->RegisterExpectedFunction("void ReceiveMessage(string message)", false);
-        as_context.as_funcs.draw_gui = ctx->RegisterExpectedFunction("void DrawGUI()", false);
-        as_context.as_funcs.draw_gui2 = ctx->RegisterExpectedFunction("void DrawGUI2()", false);
-        as_context.as_funcs.draw_gui3 = ctx->RegisterExpectedFunction("void DrawGUI3()", false);
-        as_context.as_funcs.has_focus = ctx->RegisterExpectedFunction("bool HasFocus()", false);
-        as_context.as_funcs.dialogue_camera_control = ctx->RegisterExpectedFunction("bool DialogueCameraControl()", false);
-        as_context.as_funcs.save_history_state = ctx->RegisterExpectedFunction("void SaveHistoryState(SavedChunk@ chunk)", false);
-        as_context.as_funcs.read_chunk = ctx->RegisterExpectedFunction("void ReadChunk(SavedChunk@ chunk)", false);
-        as_context.as_funcs.set_window_dimensions = ctx->RegisterExpectedFunction("void SetWindowDimensions(int width, int height)", false);
-        as_context.as_funcs.incoming_tcp_data = ctx->RegisterExpectedFunction("void IncomingTCPData(uint socket, array<uint8>@ data)", false);
+        as_context.as_funcs.hotspot_enter = ctx->RegisterExpectedFunction(
+            "void HotspotEnter(string event, MovementObject @mo)", 
+            false,
+            "Called when a MovementObject enters a Hotspot.");
+        as_context.as_funcs.hotspot_exit = ctx->RegisterExpectedFunction(
+            "void HotspotExit(string event, MovementObject @mo)", 
+            false, 
+            "Called when a MovementObject exits a Hotspot.");
+        as_context.as_funcs.receive_message = ctx->RegisterExpectedFunction(
+            "void ReceiveMessage(string message)", 
+            false,
+            "Handles messages sent to this Level context.");
+        as_context.as_funcs.draw_gui = ctx->RegisterExpectedFunction(
+            "void DrawGUI()", 
+            false,
+            "First pass of the GUI drawing functions.");
+        as_context.as_funcs.draw_gui2 = ctx->RegisterExpectedFunction(
+            "void DrawGUI2()", 
+            false,
+            "Second pass of the GUI drawing functions, for if you want to layer drawing effects.");
+        as_context.as_funcs.draw_gui3 = ctx->RegisterExpectedFunction(
+            "void DrawGUI3()", 
+            false,
+            "Third pass of the GUI drawing functions, for if you want to layer drawing effects.");
+        as_context.as_funcs.has_focus = ctx->RegisterExpectedFunction(
+            "bool HasFocus()", 
+            false,
+            "Used to determine whether or not the user is requesting mouse control.");
+        as_context.as_funcs.dialogue_camera_control = ctx->RegisterExpectedFunction(
+            "bool DialogueCameraControl()", 
+            false,
+            "Returns whether or not the level currently has camera control.");
+        as_context.as_funcs.save_history_state = ctx->RegisterExpectedFunction(
+            "void SaveHistoryState(SavedChunk@ chunk)", 
+            false,
+            "Custom callback for when level data is saved.");
+        as_context.as_funcs.read_chunk = ctx->RegisterExpectedFunction(
+            "void ReadChunk(SavedChunk@ chunk)", 
+            false,
+            "Custom callback for when level data is loaded.");
+        as_context.as_funcs.set_window_dimensions = ctx->RegisterExpectedFunction(
+            "void SetWindowDimensions(int width, int height)", 
+            false, 
+            "Callback for when the display window is resized.");
+        as_context.as_funcs.incoming_tcp_data = ctx->RegisterExpectedFunction(
+            "void IncomingTCPData(uint socket, array<uint8>@ data)",  
+            false,
+            "Callback for incoming networking data.");
 
-        as_context.as_funcs.pre_script_reload = ctx->RegisterExpectedFunction("void PreScriptReload()", false);
-        as_context.as_funcs.post_script_reload = ctx->RegisterExpectedFunction("void PostScriptReload()", false);
+        as_context.as_funcs.pre_script_reload = ctx->RegisterExpectedFunction(
+            "void PreScriptReload()", 
+            false,
+            "Function called before reloading the level script.");
+        as_context.as_funcs.post_script_reload = ctx->RegisterExpectedFunction(
+            "void PostScriptReload()", 
+            false,
+            "Function called after reloading the level script.");
 
-        as_context.as_funcs.menu = ctx->RegisterExpectedFunction("void Menu()", false);
-        as_context.as_funcs.register_mp_callbacks = ctx->RegisterExpectedFunction("void RegisterMPCallBacks()", false);
-        as_context.as_funcs.start_dialogue = ctx->RegisterExpectedFunction("void StartDialogue(const string &in name", false);
+        as_context.as_funcs.menu = ctx->RegisterExpectedFunction(
+            "void Menu()", 
+            false,
+            "TODO");
+        as_context.as_funcs.register_mp_callbacks = ctx->RegisterExpectedFunction(
+            "void RegisterMPCallBacks()", 
+            false,
+            "TODO");
+        as_context.as_funcs.start_dialogue = ctx->RegisterExpectedFunction(
+            "void StartDialogue(const string &in name)", 
+            false,
+            "TODO");
 
         ctx->LoadScript(as_context.path);
 
@@ -332,7 +393,7 @@ void Level::HandleCollisions(CollisionPtrMap& col_map, SceneGraph& scenegraph) {
     exit_call_queue.clear();
     enter_call_queue.clear();
 
-    // Convert old collision ids into pointers
+    // Convert old collision IDs into pointers
     {
         PROFILER_ZONE(g_profiler_ctx, "A");
         old_col_ptr_map.clear();

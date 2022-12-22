@@ -431,57 +431,60 @@ void ASContext::Execute(const std::string &code, bool newContext) {
     }
 }
 
-void ASContext::RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callconv, const char *comment) {
+void ASContext::RegisterGlobalFunction(const std::string& declaration, const asSFuncPtr& funcPointer, asDWORD callconv, const std::string& docstring) {
     angelscript_error_string.clear();
 
-    int r = engine->RegisterGlobalFunction(declaration, funcPointer, callconv);
+    // TODO: make Engine::RegisterGlobalFunction use std::string
+    int r = engine->RegisterGlobalFunction(declaration.c_str(), funcPointer, callconv);
     if (r < 0) {
         FatalError("Error", "Error registering function: \"%s\"\n%s", declaration, angelscript_error_string.c_str());
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "%s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "%s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterGlobalFunctionThis(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callconv, void *ptr, const char *comment) {
+void ASContext::RegisterGlobalFunctionThis(const std::string& declaration, const asSFuncPtr &funcPointer, asDWORD callconv, void *ptr, const std::string& docstring) {
     angelscript_error_string.clear();
 
-    int r = engine->RegisterGlobalFunction(declaration, funcPointer, callconv, ptr);
+    // TODO: make Engine::RegisterGlobalFunction use std::string
+    int r = engine->RegisterGlobalFunction(declaration.c_str(), funcPointer, callconv, ptr);
     if (r < 0) {
         FatalError("Error", "Error registering function: \"%s\"\n%s", declaration, angelscript_error_string.c_str());
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "%s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "%s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterGlobalProperty(const char *declaration, void *pointer, const char *comment) {
-    int r = engine->RegisterGlobalProperty(declaration, pointer);
+void ASContext::RegisterGlobalProperty(const std::string& declaration, void *pointer, const std::string& docstring) {
+    // TODO: make Engine::RegisterGlobalProperty use std::string
+    int r = engine->RegisterGlobalProperty(declaration.c_str(), pointer);
     if (r < 0) {
         FatalError("Error", "Error registering property: \"%s\"", declaration);
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "%s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "%s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "%s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterObjectType(const char *obj, int byteSize, asDWORD flags, const char *comment) {
-    int r = engine->RegisterObjectType(obj, byteSize, flags);
+void ASContext::RegisterObjectType(const std::string& obj, int byteSize, asDWORD flags, const std::string& docstring) {
+    int r = engine->RegisterObjectType(obj.c_str(), byteSize, flags);
     if (r < 0) {
         const char *error;
         switch (r) {
@@ -511,10 +514,10 @@ void ASContext::RegisterObjectType(const char *obj, int byteSize, asDWORD flags,
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "class %s { // %s\n", obj, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "class %s { /* %s */\n", obj.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "class %s {\n", obj);
+        FormatString(doc_buf, BUF_SIZE, "class %s {\n", obj.c_str());
     }
     documentation += doc_buf;
 }
@@ -522,26 +525,36 @@ void ASContext::RegisterObjectType(const char *obj, int byteSize, asDWORD flags,
 void ASContext::ExportDocs(const char *path) {
     FILE *file = my_fopen(path, "w");
     if (file) {
-        fprintf(file, "//Mandatory functions in script\n");
+        fprintf(file, "// === Mandatory functions in script ===\n");
         for (unsigned i = 0; i < expected_functions.size(); i++) {
             if (expected_functions[i].mandatory) {
-                fprintf(file, "%s\n", expected_functions[i].definition.c_str());
+                fprintf(file, "%s", expected_functions[i].definition.c_str());
+                if (!expected_functions[i].documentation.empty()) {
+                    fprintf(file, " /* %s */\n", expected_functions[i].documentation.c_str());
+                } else {
+                    fprintf(file, "\n");
+                }
             }
         }
-        fprintf(file, "\n//Optional functions in script\n");
+        fprintf(file, "\n// === Optional functions in script ===\n");
         for (unsigned i = 0; i < expected_functions.size(); i++) {
-            if (expected_functions[i].mandatory == false) {
-                fprintf(file, "%s\n", expected_functions[i].definition.c_str());
+            if (!expected_functions[i].mandatory) {
+                fprintf(file, "%s", expected_functions[i].definition.c_str());
+                if (!expected_functions[i].documentation.empty()) {
+                    fprintf(file, " /* %s */\n", expected_functions[i].documentation.c_str());
+                } else {
+                    fprintf(file, "\n");
+                }
             }
         }
-        fprintf(file, "\n//Interface\n");
+        fprintf(file, "\n// === Interface ===\n");
         fwrite(documentation.c_str(), sizeof(char), documentation.length(), file);
         fclose(file);
     }
 }
 
-void ASContext::RegisterFuncdef(const char *declaration, const char *comment) {
-    int r = engine->RegisterFuncdef(declaration);
+void ASContext::RegisterFuncdef(const std::string& declaration, const std::string& docstring) {
+    int r = engine->RegisterFuncdef(declaration.c_str());
     if (r < 0) {
         const char *error;
         switch (r) {
@@ -568,16 +581,16 @@ void ASContext::RegisterFuncdef(const char *declaration, const char *comment) {
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "    %s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "    %s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, const char *comment) {
-    int r = engine->RegisterObjectMethod(obj, declaration, funcPointer, callConv);
+void ASContext::RegisterObjectMethod(const std::string& obj, const std::string& declaration, const asSFuncPtr &funcPointer, asDWORD callConv, const std::string& docstring) {
+    int r = engine->RegisterObjectMethod(obj.c_str(), declaration.c_str(), funcPointer, callConv);
     if (r < 0) {
         const char *error;
         switch (r) {
@@ -604,16 +617,16 @@ void ASContext::RegisterObjectMethod(const char *obj, const char *declaration, c
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "    %s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "    %s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset, const char *comment) {
-    int r = engine->RegisterObjectProperty(obj, declaration, byteOffset);
+void ASContext::RegisterObjectProperty(const std::string& obj, const std::string& declaration, int byteOffset, const std::string& docstring) {
+    int r = engine->RegisterObjectProperty(obj.c_str(), declaration.c_str(), byteOffset);
     if (r < 0) {
         const char *error;
         switch (r) {
@@ -637,26 +650,30 @@ void ASContext::RegisterObjectProperty(const char *obj, const char *declaration,
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "    %s; /* %s */\n", declaration.c_str(), docstring.c_str());
+    } else {
+        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration.c_str());
+    }
     documentation += doc_buf;
 }
 
-void ASContext::RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, const char *comment) {
-    int r = engine->RegisterObjectBehaviour(obj, behaviour, declaration, funcPointer, callConv);
+void ASContext::RegisterObjectBehaviour(const std::string& obj, asEBehaviours behaviour, const std::string& declaration, const asSFuncPtr &funcPointer, asDWORD callConv, const std::string& docstring) {
+    int r = engine->RegisterObjectBehaviour(obj.c_str(), behaviour, declaration.c_str(), funcPointer, callConv);
     if (r < 0) {
         FatalError("Error", "Error registering object behaviour: \"%s\"", obj);
     }
     const int BUF_SIZE = 512;
     char doc_buf[BUF_SIZE];
-    if (comment) {
-        FormatString(doc_buf, BUF_SIZE, "    %s; // %s\n", declaration, comment);
+    if (!docstring.empty()) {
+        FormatString(doc_buf, BUF_SIZE, "    %s; /* %s */\n", declaration.c_str(), docstring.c_str());
     } else {
-        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration);
+        FormatString(doc_buf, BUF_SIZE, "    %s;\n", declaration.c_str());
     }
     documentation += doc_buf;
 }
 
-ASFunctionHandle ASContext::RegisterExpectedFunction(const std::string &function_decl, bool mandatory) {
+ASFunctionHandle ASContext::RegisterExpectedFunction(const std::string& function_decl, bool mandatory, const std::string& function_docs) {
     // First check to see if we already have this function registered.
     for (unsigned i = 0; i < expected_functions.size(); i++) {
         if (expected_functions[i].definition == function_decl) {
@@ -671,6 +688,7 @@ ASFunctionHandle ASContext::RegisterExpectedFunction(const std::string &function
 
     f.definition = function_decl;
     f.mandatory = mandatory;
+    f.documentation = function_docs;
     f.func_ptr = NULL;
     f.unloaded = true;
 

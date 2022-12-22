@@ -4020,45 +4020,167 @@ bool MovementObject::Initialize() {
 
     as_context->DocsCloseBrace();
 
-    as_funcs.init = as_context->RegisterExpectedFunction("bool Init(string)", true);
-    as_funcs.init_multiplayer = as_context->RegisterExpectedFunction("void InitMultiplayer()", false);
-    as_funcs.is_multiplayer_supported = as_context->RegisterExpectedFunction("void IsMultiplayerSupported()", false);
-    as_funcs.set_parameters = as_context->RegisterExpectedFunction("void SetParameters()", true);
-    as_funcs.notify_item_detach = as_context->RegisterExpectedFunction("void NotifyItemDetach(int)", true);
-    as_funcs.handle_editor_attachment = as_context->RegisterExpectedFunction("void HandleEditorAttachment(int, int, bool)", true);
-    as_funcs.contact = as_context->RegisterExpectedFunction("void Contact()", true);
-    as_funcs.collided = as_context->RegisterExpectedFunction("void Collided(float, float, float, float, float)", true);
-    as_funcs.movement_object_deleted = as_context->RegisterExpectedFunction("void MovementObjectDeleted(int id)", true);
-    as_funcs.script_swap = as_context->RegisterExpectedFunction("void ScriptSwap()", true);
-    as_funcs.handle_collisions_btc = as_context->RegisterExpectedFunction("void HandleCollisionsBetweenTwoCharacters(MovementObject @other)", true);
-    as_funcs.hit_by_item = as_context->RegisterExpectedFunction("void HitByItem(string material, vec3 point, int id, int type)", true);
-    as_funcs.update = as_context->RegisterExpectedFunction("void Update(int)", true);
-    as_funcs.update_multiplayer = as_context->RegisterExpectedFunction("void UpdateMultiplayer(int frames)", false);
-    as_funcs.force_applied = as_context->RegisterExpectedFunction("void ForceApplied(vec3 force)", true);
-    as_funcs.get_temp_health = as_context->RegisterExpectedFunction("float GetTempHealth()", true);
-    as_funcs.was_hit = as_context->RegisterExpectedFunction("int WasHit(string type, string attack_path, vec3 dir, vec3 pos, int attacker_id, float attack_damage_mult, float attack_knockback_mult)", true);
-    as_funcs.reset = as_context->RegisterExpectedFunction("void Reset()", true);
-    as_funcs.post_reset = as_context->RegisterExpectedFunction("void PostReset()", true);
-    as_funcs.attach_weapon = as_context->RegisterExpectedFunction("void AttachWeapon(int)", true);
-    as_funcs.set_enabled = as_context->RegisterExpectedFunction("void SetEnabled(bool)", true);
-    as_funcs.receive_message = as_context->RegisterExpectedFunction("void ReceiveMessage(string)", true);
-    as_funcs.pre_draw_camera = as_context->RegisterExpectedFunction("void PreDrawCamera(float curr_game_time)", false);
-    as_funcs.pre_draw_frame = as_context->RegisterExpectedFunction("void PreDrawFrame(float curr_game_time)", false);
-    as_funcs.pre_draw_camera_no_cull = as_context->RegisterExpectedFunction("void PreDrawCameraNoCull(float curr_game_time)", false);
-    as_funcs.update_paused = as_context->RegisterExpectedFunction("void UpdatePaused()", true);
-    as_funcs.about_to_be_hit_by_item = as_context->RegisterExpectedFunction("int AboutToBeHitByItem(int id)", true);
-    as_funcs.InputToEngine = as_context->RegisterExpectedFunction("uint InputToEngine(int input", false);
-    as_funcs.attach_misc = as_context->RegisterExpectedFunction("void AttachMisc(int)", false);
-    as_funcs.was_blocked = as_context->RegisterExpectedFunction("void WasBlocked()", false);
-    as_funcs.reset_waypoint_target = as_context->RegisterExpectedFunction("void ResetWaypointTarget()", false);
-    as_funcs.dispose = as_context->RegisterExpectedFunction("void Dispose()", false);
-    as_funcs.apply_host_input = as_context->RegisterExpectedFunction("void ApplyHostInput(uint inputs)", false);
-    as_funcs.register_mp_callbacks = as_context->RegisterExpectedFunction("void RegisterMPCallBacks()", false);
-    as_funcs.set_damage_time_from_socket = as_context->RegisterExpectedFunction("void SetDamageTimeFromSocket()", false);
-    as_funcs.set_damage_blood_time_from_socket = as_context->RegisterExpectedFunction("void SetDamageBloodTimeFromSocket()", false);
-    as_funcs.start_pose = as_context->RegisterExpectedFunction("bool StartPose(string animation_path)", false);
+    as_funcs.init = as_context->RegisterExpectedFunction(
+        "bool Init(string character_path)", 
+        true,
+        "Initial character loading, called on level load. Must return `true` if it succeeded, or `false` if not.");
+    as_funcs.init_multiplayer = as_context->RegisterExpectedFunction(
+        "void InitMultiplayer()", 
+        false,
+        "Initial character loading in a multiplayer context.");
+    as_funcs.is_multiplayer_supported = as_context->RegisterExpectedFunction(
+        "void IsMultiplayerSupported()", 
+        false);
+    as_funcs.set_parameters = as_context->RegisterExpectedFunction(
+        "void SetParameters()", 
+        true,
+        "Allows the character script to modify level script parameters, if such a thing is more useful than a hotspot.");
+    as_funcs.notify_item_detach = as_context->RegisterExpectedFunction(
+        "void NotifyItemDetach(int item_id)", 
+        true,
+        "Called when the character drops an item or weapon, or detaches it in the editor.");
+    as_funcs.handle_editor_attachment = as_context->RegisterExpectedFunction(
+        "void HandleEditorAttachment(int item_id, int attachment_type, bool is_mirrored)", 
+        true,
+        "Called when the player attaches an item to a character in the editor.");
+    as_funcs.contact = as_context->RegisterExpectedFunction(
+        "void Contact()", 
+        true,
+        "Called when any collision happens, including bouncing/resting collisions that are ignored by `Collided()`.");
+    as_funcs.collided = as_context->RegisterExpectedFunction(
+        "void Collided(float posx, float posy, float posz, float impulse, float hardness)", 
+        true,
+        "Called when a collision occurs that is significant (excludes resting collisions and ones under a certain "
+        "magnitude)");
+    as_funcs.movement_object_deleted = as_context->RegisterExpectedFunction(
+        "void MovementObjectDeleted(int id)", 
+        true,
+        "Callback to notify a character script that a different character got deleted, in case it was tracking it and "
+        "needs to be resolved.");
+    as_funcs.script_swap = as_context->RegisterExpectedFunction(
+        "void ScriptSwap()", 
+        true,
+        "Called when switching between character control scripts. Allows scripting custom behavior.");
+    as_funcs.handle_collisions_btc = as_context->RegisterExpectedFunction(
+        "void HandleCollisionsBetweenTwoCharacters(MovementObject @other)", 
+        true,
+        "Called when specifically two characters collide, allowing for custom physics/gameplay control.");
+    as_funcs.hit_by_item = as_context->RegisterExpectedFunction(
+        "void HitByItem(string material, vec3 point, int id, int type)", 
+        true,
+        "Called when an item hits a character, such as from a thrown weapon.");
+    as_funcs.update = as_context->RegisterExpectedFunction(
+        "void Update(int num_frames)", 
+        true,
+        "Called regularly by the engine to perform work. Only runs when the game is unpaused.");
+    as_funcs.update_multiplayer = as_context->RegisterExpectedFunction(
+        "void UpdateMultiplayer(int num_frames)", 
+        false,
+        "Called regularly by the engine to perform work in a multiplayer context. Only runs when the game is unpaused.");
+    as_funcs.force_applied = as_context->RegisterExpectedFunction(
+        "void ForceApplied(vec3 force)", 
+        true,
+        "Vestigial function, though still required. Not called by the engine, but can be called by user scripts.");
+    as_funcs.get_temp_health = as_context->RegisterExpectedFunction(
+        "float GetTempHealth()", 
+        true,
+        "Gets the current health of the character (to differentiate it from max character health).");
+    as_funcs.was_hit = as_context->RegisterExpectedFunction(
+        "int WasHit(string type, string attack_path, vec3 dir, vec3 pos, int attacker_id, float attack_damage_mult, float attack_knockback_mult)", 
+        true,
+        "Called when a character was hit. Handles blocking, reactions, damage, ragdolling and applying physics forces.");
+    as_funcs.reset = as_context->RegisterExpectedFunction(
+        "void Reset()", 
+        true,
+        "Called when a character is reset, usually on level reset or character respawn. Does not run on level init.");
+    as_funcs.post_reset = as_context->RegisterExpectedFunction(
+        "void PostReset()", 
+        true,
+        "Callback after `Reset()` finishes for further reset control.");
+    as_funcs.attach_weapon = as_context->RegisterExpectedFunction(
+        "void AttachWeapon(int weapon_item_id)", 
+        true,
+        "Called when a character picks up a weapon or a weapon is attached to them in the editor.");
+    as_funcs.set_enabled = as_context->RegisterExpectedFunction(
+        "void SetEnabled(bool is_enabled)", 
+        true,
+        "Custom callback for enabling/disabling character functionality. Can be used to prevent use of this object, "
+        "when desired.");
+    as_funcs.receive_message = as_context->RegisterExpectedFunction(
+        "void ReceiveMessage(string message)", 
+        true,
+        "Receives character-level messages and handles them. Used to send control commands to users.");
+    as_funcs.pre_draw_frame = as_context->RegisterExpectedFunction(
+        "void PreDrawFrame(float curr_game_time)", 
+        false,
+        "Function called once for every character before rendering takes place.");
+    as_funcs.pre_draw_camera_no_cull = as_context->RegisterExpectedFunction(
+        "void PreDrawCameraNoCull(float curr_game_time)", 
+        false,
+        "Called once per frame for every character in the scene, regardless of whether it's currently visible or not."
+        "Called directly before `PreDrawCamera()`.");
+    as_funcs.pre_draw_camera = as_context->RegisterExpectedFunction(
+        "void PreDrawCamera(float curr_game_time)", 
+        false,
+        "Called once per frame for every character in the scene that is currently visible by either a player camera, a "
+        "cubemap probe, a shadow cascade, or any other rendering call. Called directly after `PreDrawCameraNoCull()`.");
+    as_funcs.update_paused = as_context->RegisterExpectedFunction(
+        "void UpdatePaused()", 
+        true,
+        "Called regularly by the engine to perform work. Only runs when the game is paused, and only for characters "
+        "that are player controlled.");
+    as_funcs.about_to_be_hit_by_item = as_context->RegisterExpectedFunction(
+        "int AboutToBeHitByItem(int item_id)", 
+        true,
+        "Called just before a character is about to be hit by an item, primarily so you can check for dodging/"
+        "deflection. Return -1 to specify that the collision was avoided, and 1 if the collision could not be avoided.");
+    as_funcs.InputToEngine = as_context->RegisterExpectedFunction(
+        "uint InputToEngine(int input)", 
+        false,
+        "TODO");
+    as_funcs.attach_misc = as_context->RegisterExpectedFunction(
+        "void AttachMisc(int misc_item_id)", 
+        false,
+        "Called when a character picks up a non-weapon or one is attatched to them in the editor.");
+    as_funcs.was_blocked = as_context->RegisterExpectedFunction(
+        "void WasBlocked()", 
+        false,
+        "Vestigial function. Called after a hit was blocked.");
+    as_funcs.reset_waypoint_target = as_context->RegisterExpectedFunction(
+        "void ResetWaypointTarget()", 
+        false,
+        "Called when a character path point the character is using changes, either from the editor or through "
+        "scripting logic.");
+    as_funcs.dispose = as_context->RegisterExpectedFunction(
+        "void Dispose()", 
+        false,
+        "Called when a character is about to be deleted, either from the editor or on level unload. Do not delete the "
+        "character in this function, instead use it to unload any other resources attached to the character.");
+    as_funcs.apply_host_input = as_context->RegisterExpectedFunction(
+        "void ApplyHostInput(uint inputs)", 
+        false,
+        "TODO");
+    as_funcs.register_mp_callbacks = as_context->RegisterExpectedFunction(
+        "void RegisterMPCallBacks()", 
+        false,
+        "TODO");
+    as_funcs.set_damage_time_from_socket = as_context->RegisterExpectedFunction(
+        "void SetDamageTimeFromSocket()", 
+        false,
+        "TODO");
+    as_funcs.set_damage_blood_time_from_socket = as_context->RegisterExpectedFunction(
+        "void SetDamageBloodTimeFromSocket()", 
+        false,
+        "TODO");
+    as_funcs.start_pose = as_context->RegisterExpectedFunction(
+        "bool StartPose(string animation_path)", 
+        false,
+        "TODO");
 
-    as_funcs.apply_host_camera_flat_facing = as_context->RegisterExpectedFunction("void ApplyHostCameraFlatFacing(vec3 direction)", false);
+    as_funcs.apply_host_camera_flat_facing = as_context->RegisterExpectedFunction(
+        "void ApplyHostCameraFlatFacing(vec3 direction)", 
+        false,
+        "TODO");
 
     AttachEngine(ctx);
     AttachScenegraph(ctx, scenegraph_);
