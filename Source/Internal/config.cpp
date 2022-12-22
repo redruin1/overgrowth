@@ -76,7 +76,15 @@ bool Config::Load(const std::string& filename, bool just_filling_blanks, bool sh
     if (!file.is_open())
         return false;
 
-    Load(file, just_filling_blanks, shadow_variables);
+    // Pick which internal map to load to
+    Map& map = _map;
+    if (shadow_variables) {
+        map = _shadow_map;
+        LOGI << "Shadow loading" << std::endl;
+    }
+
+    if (!LoadYAML(file, map))
+        return false;
 
     file.close();
 
@@ -90,17 +98,12 @@ bool Config::Load(const std::string& filename, bool just_filling_blanks, bool sh
 
 bool Config::Load(std::istream& stream, bool just_filling_blanks, bool shadow_variables) {
     std::string line;
-    std::string comment = "//";
+    std::string comment = "#";  // Changed from "//" to "#" to make it YAML compatible
     std::string delimiter = ":";
 
-    Map* _map;
+    
 
-    if (shadow_variables) {
-        _map = &shadow_map_;
-        LOGI << "Shadow loading" << std::endl;
-    } else {
-        _map = &map_;
-    }
+    
 
     int count = 0;
     while (stream.good()) {

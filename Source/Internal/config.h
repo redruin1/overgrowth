@@ -26,6 +26,7 @@
 #include <Graphics/camera.h>
 
 #include <Internal/datemodified.h>
+#include <Internal/nano_yaml.h>
 #include <Math/vec2math.h>
 
 #include <SDL_keycode.h>
@@ -122,12 +123,12 @@ class ResolutionCompare {
  *    int level = config["level"].toNumber<int>();
  */
 
-class Config {
+class Config : public YAML::Interpreter {
    public:
     // Keep track of path and date modified so we can live-update
-    typedef std::map<std::string, ConfigVal> Map;
-    Map map_;         // The actual map used to store key/value pairs
-    Map shadow_map_;  // Runtime hidden values.
+    // typedef std::map<std::string, ConfigVal> Map;
+    // Map map_;         // The actual map used to store key/value pairs
+    Map _shadow_map;  // Runtime hidden values.
 
     // Boolean keeping track on if we believe this config has changed.
     bool has_changed_since_save;
@@ -137,7 +138,6 @@ class Config {
     // Loads key/value pairs from a file
     // Returns whether or not this operation was successful
     bool Load(const std::string& filename, bool just_filling_blanks = false, bool shadow_variables = false);
-    bool Load(std::istream& data, bool just_filling_blanks = false, bool shadow_variables = false);
     bool Save(const std::string& filename);
     int GetMonitorCount();
     std::vector<Resolution> GetPossibleResolutions();

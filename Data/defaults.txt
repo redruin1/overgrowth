@@ -1,17 +1,17 @@
-// This just specifies the default settings, if you
-// would like to edit the current settings, you can
-// find them on Windows at:
-// C:/Users/Username/My Documents/Wolfire/Data/config.txt
-// or on Mac at:
-// /Users/Username/Library/Application Support/Overgrowth/
-// Data/config.txt
-// or on Linux at:
-// ~/.local/share/Overgrowth/Data/config.txt
+# This just specifies the default settings, if you
+# would like to edit the current settings, you can
+# find them on Windows at:
+# C:/Users/Username/My Documents/Wolfire/Data/config.txt
+# or on Mac at:
+# /Users/Username/Library/Application Support/Overgrowth/
+# Data/config.txt
+# or on Linux at:
+# ~/.local/share/Overgrowth/Data/config.txt
 
 screenwidth:            800
 screenheight:           600
 fullscreen:             false
-imgui_scale:		0
+imgui_scale:		    0
 vsync:                  0
 limit_fps_in_game:      false
 max_frame_rate:         60
@@ -163,7 +163,7 @@ key[debug_switch_to_wolf]: 5
 key[debug_switch_to_dog]: 6
 key[debug_switch_to_rabbot]: 7
 
-// SDL's internal gamepad codes are based on XBOX, so these are too
+# SDL's internal gamepad codes are based on XBOX, so these are too
 gamepad[up]:             lefty-
 gamepad[down]:           lefty+
 gamepad[left]:           leftx-
@@ -186,12 +186,12 @@ gamepad[menu_left]:      dpleft
 gamepad[menu_right]:     dpright
 gamepad[menu_return]:    a
 
-// Used to keep track of which player's gamepad value is currently being edited.
-// Automatically reset at launch
+# Used to keep track of which player's gamepad value is currently being edited.
+# Automatically reset at launch
 menu_player_config:     0
 
-// Generic controller input
-// Deadzone tested with my cheap wired X360 controller
+# Generic controller input
+# Deadzone tested with my cheap wired X360 controller
 gamepad_deadzone: 0.075
 gamepad_look_sensitivity: 1.25
 controller[movex]:  axis1
@@ -205,10 +205,10 @@ controller[drop]:   button3
 controller[attack]: axis6>0.5
 controller[grab]:   axis5>0.5
 
-// Editor hotkeys
+# Editor hotkeys
 bind[pause]: `
 bind_win[quit]: alt+f4
-// Actually, this might be relevant to MacOSX only, on Linux/x11 there is no standard that it's just best to handle whatever signal the WM sends the program.
+# Actually, this might be relevant to MacOSX only, on Linux/x11 there is no standard that it's just best to handle whatever signal the WM sends the program.
 bind_unix[quit]: cmd+q
 bind[back]: esc
 bind[clone_transform]: alt
